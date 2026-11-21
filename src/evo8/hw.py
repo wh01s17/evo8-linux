@@ -49,9 +49,7 @@ def loopback_get() -> dict:
 def loopback_set(source: str) -> None:
     if source not in LOOPBACK_SOURCES:
         raise HwError(f"fuente desconocida: {source} (opciones: {', '.join(LOOPBACK_SOURCES)})")
-    with usb.session() as s:
-        for ch, src in zip(LOOPBACK_CHANNELS, LOOPBACK_SOURCES[source]):
-            s.set(ROUTE_UNIT, ROUTE_SELECTOR, ch, bytes([src]))
+    apply([], source)
 
 
 def _mcn(inp: int, out: int) -> int:
@@ -69,7 +67,28 @@ def mixer_get() -> list[list[float]]:
 
 def mixer_set(changes: list[tuple[int, int, float]]) -> None:
     """Apply (input, output, dB) changes, 0-based, in one session."""
+    apply(changes, None)
+
+
+def read_all() -> dict:
+    """Mixer matrix and loop-back source in one session: {mix, loopback}."""
+    with usb.session() as s:
+        matrix = [[s.get_s16(MIXER_UNIT, MIXER_SELECTOR, _mcn(i, o)) / 256 for o in range(MIXER_OUTPUTS)]
+                  for i in range(MIXER_INPUTS)]
+        pair = tuple(s.get(ROUTE_UNIT, ROUTE_SELECTOR, c, 1)[0] for c in LOOPBACK_CHANNELS)
+    name = next((n for n, p in LOOPBACK_SOURCES.items() if p == pair), None)
+    return {"mix": matrix, "loopback": name, "loopbackRaw": list(pair)}
+
+
+def apply(changes: list[tuple[int, int, float]], loopback: str | None) -> None:
+    """Mixer changes (input, output, dB; 0-based) and an optional loop-back
+    source, all in one session so the audio drops only once."""
+    if loopback is not None and loopback not in LOOPBACK_SOURCES:
+        raise HwError(f"fuente desconocida: {loopback}")
     with usb.session() as s:
         for inp, out, db in changes:
             db = max(MIXER_OFF_DB, min(0.0, db))
             s.set_s16(MIXER_UNIT, MIXER_SELECTOR, _mcn(inp, out), round(db * 256))
+        if loopback is not None:
+            for ch, src in zip(LOOPBACK_CHANNELS, LOOPBACK_SOURCES[loopback]):
+                s.set(ROUTE_UNIT, ROUTE_SELECTOR, ch, bytes([src]))
