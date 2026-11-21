@@ -10,7 +10,7 @@ import argparse
 import json
 import sys
 
-from . import alsa, apps, calibrate, mix, monitor
+from . import about, alsa, apps, calibrate, mix, monitor
 
 
 def _json(value) -> None:
@@ -23,6 +23,7 @@ def _on_off(word: str) -> bool | None:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="evoctl", description="Control del Audient EVO 8 y la Mezcla en Linux.")
+    p.add_argument("--version", action="version", version=f"evo8-linux {about.version()}")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     m = sub.add_parser("mix", help="ganancias de la Mezcla (1-2 entradas, 3-4 Compartido L/R)")

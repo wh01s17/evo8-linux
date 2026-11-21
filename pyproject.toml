@@ -4,12 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "evo8-linux"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Control del Audient EVO 8 en Linux: mezcla de monitoreo, loop-back, micrófono virtual para llamadas y mezclador."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
+authors = [{ name = "wh01s17" }]
 dependencies = []
+
+[project.urls]
+Repository = "https://github.com/wh01s17/evo8-linux"
+Issues = "https://github.com/wh01s17/evo8-linux/issues"
 
 [project.optional-dependencies]
 usb = ["pyusb>=1.2"]
@@ -20,6 +25,9 @@ evoctl = "evo8.cli:main"
 
 [project.gui-scripts]
 evo8-mixer = "evo8.gui.app:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "evo8.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
