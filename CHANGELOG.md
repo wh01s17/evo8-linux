@@ -26,8 +26,8 @@ Primera versión publicada.
 ### Hardware de la EVO 8 (por USB)
 
 - Mezcla de monitoreo interna (10 entradas × 4 salidas) con faders, paneo y
-  silencio, como en EVO Control; atajos: de fábrica, sin monitoreo directo,
-  solo la entrada 1, entradas 1 y 2.
+  silencio; atajos: de fábrica, sin monitoreo directo, solo la entrada 1,
+  entradas 1 y 2.
 - Loop-back: elegir qué llega a los canales de captura 5-6.
 - Phantom 48 V y silencio por entrada; ganancia de los preamps en dB.
 - Los cambios van en una sola sesión USB al pulsar «Aplicar a la EVO».

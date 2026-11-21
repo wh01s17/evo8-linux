@@ -49,6 +49,11 @@ un cliente delgado.
   app. No atar textos de la app ni de la documentación a un uso concreto
   («llamada», «clase», Meet, «calidad de teléfono»…). Los ejemplos de apps van
   juntos y variados (OBS, un DAW, Discord, el navegador).
+- **No aludir a la app oficial de Audient** en textos para el usuario (app,
+  README, changelog, paquete): nada de «como en EVO Control». Solo la
+  documentación técnica (`docs/protocolo-usb.md`, comentarios del código,
+  §3.4 y ingeniería inversa de este plan) la nombra, como fuente del
+  protocolo y de las reglas de seguridad del USB.
 - Cada control de la ventana tiene un botón **󰑐 restablecer** a su valor
   estándar.
 - Los archivos Python no deben pasar de **1000 líneas** (dividir en módulos).

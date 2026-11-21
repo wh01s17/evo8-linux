@@ -11,10 +11,9 @@
 Control del **Audient EVO 8** en Linux: una ventana tipo consola y un CLI
 para la interfaz y para el audio del sistema.
 
-Audient solo publica **EVO Control** para Windows y macOS. En Linux la EVO 8
-funciona como interfaz de audio estándar, pero el kernel no expone su mezcla de
-monitoreo interna ni el ruteo del loop-back. evo8-linux los recupera hablando
-con la interfaz por USB con el mismo protocolo que usa EVO Control. Además
+En Linux la EVO 8 funciona como interfaz de audio estándar, pero el kernel no
+expone su mezcla de monitoreo interna, el ruteo del loop-back ni el phantom.
+evo8-linux los controla hablando con la interfaz directamente por USB. Además
 incluye un mezclador para PipeWire y, si lo necesitas, un micrófono virtual que
 junta tus entradas con el audio de otras apps.
 
@@ -22,7 +21,7 @@ junta tus entradas con el audio de otras apps.
 
 ## Qué hace
 
-**El hardware de la EVO 8, como en EVO Control**
+**El hardware de la EVO 8**
 
 - **Mezcla de monitoreo interna**: lo que oyes directo en los audífonos, sin
   pasar por el PC y sin latencia. Es la matriz de 10 entradas (4 analógicas y
@@ -178,15 +177,14 @@ El proyecto mueve dos cosas distintas:
   *filter-chain* que retrasa Compartido y aplica una ganancia por canal) y la
   **Mezcla** (el micrófono virtual). La ventana y `evoctl` cambian esos valores
   al instante, sin cortes.
-- **El hardware de la EVO** (ámbar) no pasa por PipeWire. EVO Control usa
+- **El hardware de la EVO** (ámbar) no pasa por PipeWire. Se controla con
   peticiones USB estándar de audio (UAC2) que el kernel no expone. Linux no
   deja enviarlas mientras el driver de audio tiene la interfaz, así que
   evo8-linux suelta el driver, envía y lo devuelve. El audio se corta ~0,1 s,
   y por eso la ventana agrupa los cambios y espera a que pulses *Aplicar a la
   EVO*.
 
-El protocolo, las peticiones que usa EVO Control y lo verificado en el
-dispositivo están en
+El protocolo USB y lo verificado en el dispositivo están en
 [`docs/protocolo-usb.md`](https://github.com/wh01s17/evo8-linux/blob/main/docs/protocolo-usb.md).
 
 ## El repositorio
@@ -206,8 +204,8 @@ Los tests corren con `make test`, sin necesidad de tener la EVO conectada.
 
 ## Advertencia
 
-Proyecto independiente, sin relación con Audient. EVO y EVO Control son
-marcas de Audient. El control por USB se basa en ingeniería inversa para
+Proyecto independiente, sin relación con Audient. EVO es una marca de
+Audient. El control por USB se basa en ingeniería inversa para
 interoperabilidad y no incluye código ni binarios de Audient. Se probó en una
 EVO 8 con firmware 1.4c. Úsalo bajo tu responsabilidad: si la interfaz deja de
 responder, desconéctala y vuelve a conectarla.
