@@ -74,8 +74,18 @@ class Profiles(unittest.TestCase):
         self.assertEqual([p["label"] for p in evo["profiles"]],
                          ["Pro Audio", "Estándar", "Solo salida", "2.1 + 4.1"])
         self.assertEqual(evo["warning"], "Requiere Pro Audio")
+        self.assertEqual([p["hint"] for p in evo["profiles"]][:3],
+                         ["cada canal aparte · lo usa la Mezcla",
+                          "entrada y salida comunes", "solo sonido, sin entrada"])
         self.assertEqual(cards[1]["label"], "HDMI")
         self.assertEqual(cards[1]["warning"], "")
+
+    def test_bluetooth_hints(self):
+        raw = [{"name": "bluez_card.AA", "description": "Parlante", "active": "a2dp-sink",
+                "profiles": [prof("headset-head-unit", "Headset", 1, 1), prof("a2dp-sink", "A2DP", 1, 0)]}]
+        self.assertEqual([(p["label"], p["hint"]) for p in profiles.cards(raw)[0]["profiles"]],
+                         [("Estándar", "con micrófono, sonido de llamada"),
+                          ("Solo salida", "solo sonido, alta calidad")])
 
 
 if __name__ == "__main__":

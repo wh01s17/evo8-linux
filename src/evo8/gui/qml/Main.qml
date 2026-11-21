@@ -85,7 +85,7 @@ ApplicationWindow {
             Layout.fillWidth: true
             visible: window.page === 0
             text: window.m.gains !== null
-                ? "PRE  preamp de la EVO   ·   FADER  cuánto entra a la Mezcla   ·   SINC  alinea lo que tocas sobre Compartido   ·   󰑐  volver al estándar"
+                ? "PRE  preamp de la EVO   ·   FADER  cuánto entra a la Mezcla   ·   SINC  alinea lo que tocas sobre Compartido   ·   PERFILES  cómo usa el sistema cada tarjeta   ·   󰑐  volver al estándar"
                 : "No se encontró la Mezcla (config/pipewire/pipewire.conf.d/20-mezcla.conf)"
             color: window.m.gains !== null ? Theme.dim : Theme.urgent
             font.family: Theme.font

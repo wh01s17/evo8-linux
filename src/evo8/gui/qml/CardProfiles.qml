@@ -22,7 +22,7 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.margins: 8
-        spacing: 12
+        spacing: 8
 
         Repeater {
             model: root.cards
@@ -62,14 +62,14 @@ Item {
                         required property var modelData
                         readonly property bool active: modelData.name === card.modelData.active
                         width: card.width
-                        height: label.implicitHeight + 8
+                        height: label.implicitHeight + (hint.visible ? hint.implicitHeight + 1 : 0) + 4
                         radius: Theme.radius
                         color: active ? Theme.alpha(Theme.foreground, 0.12)
                              : mouse.containsMouse ? Theme.alpha(Theme.foreground, 0.07) : "transparent"
                         Text {
                             id: tick
                             x: 4
-                            anchors.verticalCenter: parent.verticalCenter
+                            y: 2
                             width: 16
                             text: parent.active ? "󰄬" : ""
                             color: Theme.foreground
@@ -80,13 +80,27 @@ Item {
                             id: label
                             anchors.left: tick.right
                             anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
+                            y: 2
                             text: modelData.label
                             color: parent.active ? Theme.foreground : Theme.dim
                             font.family: Theme.font
                             font.pixelSize: Theme.caption
                             font.bold: parent.active
                             elide: Text.ElideRight
+                        }
+                        // What the profile does, under its name.
+                        Text {
+                            id: hint
+                            anchors.left: label.left
+                            anchors.right: parent.right
+                            anchors.top: label.bottom
+                            anchors.topMargin: 1
+                            visible: text !== ""
+                            text: modelData.hint || ""
+                            color: Theme.alpha(Theme.dim, 0.75)
+                            font.family: Theme.font
+                            font.pixelSize: Theme.caption - 1
+                            wrapMode: Text.WordWrap
                         }
                         MouseArea {
                             id: mouse

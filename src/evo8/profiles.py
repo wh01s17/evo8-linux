@@ -6,6 +6,7 @@ of them useless. Each card keeps:
   Estándar     -- the best regular profile (input + output if one exists)
   Solo salida  -- the best output-only one, when Estándar has inputs too
 plus whatever is active now, so the current state is always visible.
+Each one carries a short hint saying what picking it does.
 """
 
 from __future__ import annotations
@@ -39,7 +40,23 @@ def card_label(name: str, description: str, profiles: list[dict]) -> str:
     return friendly_label(desc)
 
 
-def curate(profiles: list[dict], active: str) -> list[dict]:
+def hint(profile: dict, bluetooth: bool = False, required: bool = False) -> str:
+    """What picking this profile does, in a few words."""
+    if profile["name"] == "pro-audio":
+        return "cada canal aparte" + (" · lo usa la Mezcla" if required else "")
+    if profile["sinks"] and profile["sources"]:
+        return "con micrófono, sonido de llamada" if bluetooth else "entrada y salida comunes"
+    if profile["sinks"]:
+        if bluetooth:
+            return "solo sonido, alta calidad"
+        return "solo sonido, sin entrada"
+    if profile["sources"]:
+        return "solo entrada"
+    return ""
+
+
+def curate(profiles: list[dict], active: str, bluetooth: bool = False,
+           required: str = "") -> list[dict]:
     """Profiles come sorted by priority (apps.card_profiles)."""
     picked: list[dict] = []
     seen: set[str] = set()
@@ -47,7 +64,8 @@ def curate(profiles: list[dict], active: str) -> list[dict]:
     def add(p, label):
         if p and p["name"] not in seen:
             seen.add(p["name"])
-            picked.append({"name": p["name"], "label": label})
+            picked.append({"name": p["name"], "label": label,
+                           "hint": hint(p, bluetooth, p["name"] == required)})
 
     pro = next((p for p in profiles if p["name"] == "pro-audio"), None)
     rest = [p for p in profiles if p["name"] != "pro-audio"]
@@ -74,17 +92,19 @@ def warning(card: dict) -> str:
 
 
 def cards(raw: list[dict] | None = None) -> list[dict]:
-    """[{name, label, active, required, warning, profiles: [{name, label}]}]"""
+    """[{name, label, active, required, warning, profiles: [{name, label, hint}]}]"""
     result = []
     for c in apps.card_profiles() if raw is None else raw:
-        curated = curate(c["profiles"], c["active"])
+        required = REQUIRED.get(c["name"], "")
+        curated = curate(c["profiles"], c["active"],
+                         bluetooth=str(c["name"]).startswith("bluez_card."), required=required)
         if len(curated) < 2:
             continue
         card = {
             "name": c["name"],
             "label": card_label(c["name"], c["description"], c["profiles"]),
             "active": c["active"],
-            "required": REQUIRED.get(c["name"], ""),
+            "required": required,
             "profiles": curated,
         }
         card["warning"] = warning(card)
