@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Tests (Arch Linux)
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install dependencies
+        run: |
+          pacman -Syu --noconfirm --needed git make python python-pyusb pyside6 nodejs
+      - uses: actions/checkout@v4
+      - name: Run tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: make test
+
+  package:
+    name: Build the Arch package
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    needs: test
+    steps:
+      - name: Install build tools
+        run: |
+          pacman -Syu --noconfirm --needed base-devel git namcap sudo
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # pkgver counts commits
+      - name: Prepare an unprivileged builder (makepkg refuses root)
+        run: |
+          useradd -m builder
+          echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
+          sudo -u builder git config --global --add safe.directory '*'
+          cp -r packaging/arch /home/builder/pkg
+          # Build this exact commit, not whatever is on GitHub's main.
+          sed -i "s|git+https://github.com/wh01s17/evo8-linux.git|git+file://$GITHUB_WORKSPACE#commit=$GITHUB_SHA|" \
+            /home/builder/pkg/PKGBUILD
+          chown -R builder:builder /home/builder/pkg
+      - name: Lint PKGBUILD
+        run: namcap packaging/arch/PKGBUILD
+      - name: makepkg
+        working-directory: /home/builder/pkg
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: sudo -u builder --preserve-env=QT_QPA_PLATFORM makepkg -s --noconfirm
+      - name: Lint package
+        working-directory: /home/builder/pkg
+        run: namcap evo8-linux-git-*.pkg.tar.zst
+      - name: Install and smoke test
+        working-directory: /home/builder/pkg
+        run: |
+          pacman -U --noconfirm evo8-linux-git-*.pkg.tar.zst
+          evoctl --help
+          python -c "import evo8.gui.app, evo8.usb, evo8.hw"
+          test -f /usr/lib/python3*/site-packages/evo8/gui/qml/Main.qml
+          grep -q '^ExecStart=/usr/bin/evoctl restore' /usr/lib/systemd/user/evo8-restore.service
+          test -f /usr/share/pipewire/pipewire.conf.d/20-mezcla.conf
+          test -f /usr/lib/udev/rules.d/70-audient-evo8.rules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evo8-linux-git
+          path: /home/builder/pkg/*.pkg.tar.zst
