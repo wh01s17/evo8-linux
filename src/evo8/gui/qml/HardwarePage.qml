@@ -430,18 +430,40 @@ ScrollView {
             property bool open: false
             spacing: 18
 
-            Text {
-                text: (advanced.open ? "▾ " : "▸ ") + "AVANZADO · loop-back y matriz completa (incluye el audio del PC)"
-                color: Theme.dim
-                font.family: Theme.font
-                font.pixelSize: Theme.caption
-                font.letterSpacing: 1.2
-                font.bold: true
+            // Opening scrolls the page down to the options, closing back up,
+            // so the change is never off-screen.
+            function toggle() {
+                open = !open
+                Qt.callLater(function() {
+                    var f = page.contentItem
+                    f.contentY = open ? Math.max(0, Math.min(advanced.y, f.contentHeight - f.height)) : 0
+                })
+            }
+
+            Rectangle {
+                width: advLabel.implicitWidth + 28
+                height: advLabel.implicitHeight + 14
+                radius: Theme.radius
+                color: advanced.open ? Theme.alpha(Theme.foreground, 0.1)
+                     : advMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.07) : "transparent"
+                border.width: 1
+                border.color: Theme.alpha(Theme.foreground, advanced.open ? 0.5 : 0.3)
+                Text {
+                    id: advLabel
+                    anchors.centerIn: parent
+                    text: (advanced.open ? "▾  Ocultar avanzado" : "▸  Avanzado")
+                          + " · loop-back y matriz completa (incluye el audio del PC)"
+                    color: Theme.foreground
+                    font.family: Theme.font
+                    font.pixelSize: Theme.caption
+                    font.bold: true
+                }
                 MouseArea {
+                    id: advMouse
                     anchors.fill: parent
-                    anchors.margins: -4
+                    hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: advanced.open = !advanced.open
+                    onClicked: advanced.toggle()
                 }
             }
 
