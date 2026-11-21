@@ -67,11 +67,16 @@ La EVO 8 tiene que estar en el perfil **Pro Audio**
 
 - **CONSOLA**: una tira por canal (entradas, Compartido, apps, la Mezcla y la
   salida) con preamp, fader, medidores, compartir, silencio, sincronía, monitor
-  y 󰑐 para volver al valor estándar. Al final, los perfiles de cada tarjeta.
+  y 󰑐 para volver al valor estándar. Al final, los perfiles
+  de cada tarjeta (cómo la usa el sistema), con lo que hace cada uno.
+  En la tira de Compartido, *Calibrar* mide el desfase mientras tocas sobre
+  un click y ajusta la sincronía.
 - **EVO 8**: el loop-back y la mezcla de monitoreo interna. Los cambios quedan
   en espera hasta que pulsas *Aplicar a la EVO*.
 
-`evo8-mixer --evo` abre directo en la pestaña EVO 8.
+`evo8-mixer --evo` abre directo en la pestaña EVO 8. Hay una sola ventana: volver a
+lanzar `evo8-mixer` la trae al frente (y abre otra si la anterior dejó de
+responder).
 
 ### CLI
 

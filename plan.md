@@ -124,6 +124,17 @@ mezcla.suma = filter-chain: compL/compR (delay) ─► mix (Gain 1-4) ─► "Me
   relee. El último estado leído se guarda en `state.json` (`hw`).
 - QML sin dependencias del shell: `Theme.qml` (singleton), `PixelSlider`,
   `Toggle`, `GlyphButton`, `VMeter`, `Strip`, `ConsolePage`, `HardwarePage`.
+- Las dos pestañas reciben el tamaño del contenedor mediante anclas. Los
+  `ScrollView` calculan el tamaño de su contenido a partir del espacio
+  disponible. Con `StackLayout` las dos vistas juntas bloqueaban Qt antes
+  del primer fotograma. `make test` comprueba el arranque y el cambio de
+  pestaña si está instalado PySide6.
+- Instancia única por `QLocalServer`: un segundo `evo8-mixer` manda `raise`
+  y espera `ok` (1 s). Si la ventana anterior está colgada, el kernel igual
+  acepta la conexión, por eso se exige la respuesta; sin ella se abre otra.
+  Así quedaba muerto el botón "Abrir mezclador" de la barra cuando la ventana
+  se congelaba. El servidor lee el pedido antes de responder: cerrar un
+  socket Unix con datos sin leer resetea al cliente y pierde el `ok`.
 
 ### 3.4 Control del hardware por USB (usb.py, hw.py)
 
@@ -164,7 +175,8 @@ MonitorController del EVO 16 (no aplica al EVO 8).
 - Calibración de sincronía (análisis probado con señal sintética: 85 ms → 85 ms).
 - Transporte USB y `evoctl hw loopback get|set`, `evoctl hw mix get|set`.
 - Tests (`make test`): parseo de pw-link/amixer, preamp, calibración,
-  snapshot de la ventana y perfiles.
+  snapshot de la ventana, perfiles y arranque de la ventana (ambas pestañas,
+  en un subproceso con límite de tiempo; requiere PySide6).
 - Repo público: https://github.com/wh01s17/evo8-linux
 - Preamps guardados: la EVO vuelve a -8 dB tras un corte de energía;
   `evoctl apply` los restaura.
@@ -173,7 +185,8 @@ MonitorController del EVO 16 (no aplica al EVO 8).
   COMPARTIDO con OÍR/SINC, APPS con compartir/mute, MEZCLA con MONITOR, SALIDA
   por pares, PERFILES) y pestaña EVO 8 (loop-back y mezcla interna 10×4 con
   cambios en espera y "Aplicar a la EVO"). `evo8-mixer --evo` abre en la
-  pestaña de hardware. App id Wayland: `evo8-mixer`.
+  pestaña de hardware. App id Wayland: `evo8-mixer`. Una sola ventana;
+  `EVO8_MIXER_INSTANCE=<nombre>` abre una instancia aparte (pruebas).
 
 ### En los dotfiles (`~/dotfiles`)
 
@@ -206,10 +219,9 @@ copia de `20-mezcla.conf`. Hyprland: regla `class ^evo8-mixer$` flotante
    la regla udev (`sudo make udev`).
    Pendiente: verificar con audio el orden de las entradas de la mezcla
    interna (apagar IN 1 → OUT 1-2 y escuchar).
-4. **Ventana**: hecha. Pendiente: botón Calibrar en la tira COMP (corre
-   `calibrate.run` en el worker y muestra el resultado), atajos de teclado,
-   tema leído desde el shell wh01s17 si existe, y presets para la mezcla
-   interna ("entradas a audífonos", "sin monitoreo directo").
+4. **Ventana**: hecha, con el botón Calibrar en la tira COMP y los presets
+   de la mezcla interna. Pendiente: atajos de teclado (hoy solo Esc cierra)
+   y tema leído desde el shell wh01s17 si existe.
 5. **Migrar los dotfiles**: hecho (ver §4).
 6. **Ruta sin cortes (opcional, a futuro)**: que `snd-usb-audio` exponga el
    Mixer Unit 60 como controles ALSA. Los descriptores son válidos; averiguar
@@ -217,7 +229,7 @@ copia de `20-mezcla.conf`. Hyprland: regla `class ^evo8-mixer$` flotante
    `dyndbg` y mirar `dmesg`; requiere sudo y corta el audio). Posible parche o
    quirk upstream.
 7. Calibrar la sincronía con el usuario tocando (`evoctl calibrate --apply`).
-8. Commit inicial y, si el usuario quiere, publicar el repo.
+8. ~~Commit inicial y publicar el repo~~: hecho (ver §4).
 
 ---
 
