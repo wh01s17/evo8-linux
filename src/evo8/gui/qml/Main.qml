@@ -52,7 +52,7 @@ ApplicationWindow {
             Layout.fillWidth: true
             spacing: 28
             Image {
-                source: "../evo8-mixer.svg"
+                source: "../../data/evo8-mixer.svg"
                 Layout.preferredWidth: 22
                 Layout.preferredHeight: 22
                 sourceSize: Qt.size(44, 44)
@@ -98,7 +98,7 @@ ApplicationWindow {
             opacity: window.page === 0 ? 1 : 0
             text: window.m.gains !== null
                 ? "PRE  preamp de la EVO   ·   FADER  cuánto entra a la Mezcla   ·   SINC  alinea lo que tocas sobre Compartido   ·   PERFILES  cómo usa el sistema cada tarjeta   ·   󰑐  volver al estándar"
-                : "No se encontró la Mezcla (config/pipewire/pipewire.conf.d/20-mezcla.conf)"
+                : "No se encontró la Mezcla: corre «evoctl setup» y reinicia PipeWire"
             color: window.m.gains !== null ? Theme.dim : Theme.urgent
             font.family: Theme.font
             font.pixelSize: Theme.caption

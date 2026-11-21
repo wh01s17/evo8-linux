@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 QML_DIR = Path(__file__).with_name("qml")
-ICON = Path(__file__).with_name("evo8-mixer.svg")
+ICON = Path(__file__).parents[1] / "data" / "evo8-mixer.svg"
 
 
 def main(argv: list[str] | None = None) -> int:

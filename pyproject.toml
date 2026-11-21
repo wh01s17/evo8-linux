@@ -33,4 +33,5 @@ version = { attr = "evo8.__version__" }
 where = ["src"]
 
 [tool.setuptools.package-data]
-"evo8.gui" = ["qml/*.qml", "qml/*.js", "qml/qmldir", "*.svg"]
+"evo8.gui" = ["qml/*.qml", "qml/*.js", "qml/qmldir"]
+"evo8.data" = ["*.svg", "**/*.conf", "**/*.rules", "**/*.service", "**/*.desktop"]

@@ -48,16 +48,16 @@ package() {
 
   # PipeWire reads drop-ins from /usr/share; a file with the same name in
   # ~/.config/pipewire overrides it.
-  install -Dm644 config/pipewire/pipewire.conf.d/20-mezcla.conf \
+  install -Dm644 src/evo8/data/pipewire/pipewire.conf.d/20-mezcla.conf \
     "$pkgdir/usr/share/pipewire/pipewire.conf.d/20-mezcla.conf"
-  install -Dm644 config/pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf \
+  install -Dm644 src/evo8/data/pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf \
     "$pkgdir/usr/share/pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf"
 
-  install -Dm644 udev/70-audient-evo8.rules "$pkgdir/usr/lib/udev/rules.d/70-audient-evo8.rules"
-  install -Dm644 data/evo8-restore.service "$pkgdir/usr/lib/systemd/user/evo8-restore.service"
+  install -Dm644 src/evo8/data/udev/70-audient-evo8.rules "$pkgdir/usr/lib/udev/rules.d/70-audient-evo8.rules"
+  install -Dm644 src/evo8/data/systemd/evo8-restore.service "$pkgdir/usr/lib/systemd/user/evo8-restore.service"
   sed -i 's|%h/.local/bin/evoctl|/usr/bin/evoctl|' "$pkgdir/usr/lib/systemd/user/evo8-restore.service"
-  install -Dm644 data/evo8-mixer.desktop "$pkgdir/usr/share/applications/evo8-mixer.desktop"
-  install -Dm644 src/evo8/gui/evo8-mixer.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/evo8-mixer.svg"
+  install -Dm644 src/evo8/data/applications/evo8-mixer.desktop "$pkgdir/usr/share/applications/evo8-mixer.desktop"
+  install -Dm644 src/evo8/data/evo8-mixer.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/evo8-mixer.svg"
 
   install -Dm644 README.md "$pkgdir/usr/share/doc/$_name/README.md"
   install -Dm644 docs/protocolo-usb.md "$pkgdir/usr/share/doc/$_name/protocolo-usb.md"

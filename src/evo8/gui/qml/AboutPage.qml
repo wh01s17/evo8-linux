@@ -94,7 +94,7 @@ ScrollView {
                 width: parent.width
                 spacing: 18
                 Image {
-                    source: "../evo8-mixer.svg"
+                    source: "../../data/evo8-mixer.svg"
                     width: 72
                     height: 72
                     sourceSize: Qt.size(144, 144)

@@ -1,4 +1,4 @@
-"""The Mezcla virtual microphone (config/pipewire/pipewire.conf.d/20-mezcla.conf).
+"""The Mezcla virtual microphone (evo8/data/pipewire/pipewire.conf.d/20-mezcla.conf).
 
 mezcla.suma is a filter-chain summing four channels into Mezcla:
   mix:Gain 1 = interface input 1, mix:Gain 2 = input 2,
