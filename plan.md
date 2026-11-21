@@ -143,8 +143,8 @@ Detalle completo en `docs/protocolo-usb.md`. Resumen:
 |--------|--------|--------|
 | 51, selector 6 | Ruteo de captura (1 byte/canal 0-5). Fuentes 0-5 = entradas, 6-11 = PC 1-6. Fábrica `[0,1,2,3,10,11]` | **Confirmado con audio** |
 | 60, selector 1 | Mezcla de monitoreo 10×4, canal = `entrada*4+salida`, s16 dB×256, -128 = off | **Lectura/escritura confirmadas**; orden de entradas por confirmar con audio |
-| 58 | `UacXUAudientInputControl` (por entrada: ¿phantom, mute, smart gain, monitor?) | Pendiente |
-| 59 | `UacXUAudientOutputControl` (ALSA "Extension Unit Switch" = off) | Pendiente |
+| 58 | Controles por entrada, 4 bytes, canal = entrada-1: CS0 phantom 48 V, CS1 ganancia (dB×256), CS2 mute, CS3 link estéreo, CS4 bitmask (bit0 Smart Gain) | CS0, CS1 y CS2 **confirmados** (phantom con el botón físico; mute escritura/lectura); CS3/CS4 según la app |
+| 59 | Salida, 4 bytes: CS0 volumen (dB×256), CS1 mute (según la app). Lee CS0=-127 dB y CS2=1 sin interpretar | **CS ≥ 3 cuelga el firmware** |
 | 11 / 10 | FU: preamp ("Mic Playback Volume") / volumen de salida | Ya en ALSA |
 | 50, 57 | XU sin mapear (50 alimenta al Mixer Unit) | Pendiente |
 
@@ -198,10 +198,14 @@ copia de `20-mezcla.conf`. Hyprland: regla `class ^evo8-mixer$` flotante
    `InputControlModel` (0x47c0a0…) y `OutputControlModel` (0x47ebc0…) y los
    envoltorios `FUN_00658cb0`, `0x658c80`, `0x658d00`, `0x658b40`. Probar
    primero con GET, después SET reversibles a volumen bajo.
-3. **Comandos de alto nivel** en `hw.py`: presets de mezcla interna
-   ("entradas 1-2 a los audífonos", "sin monitoreo directo"), loop-back por
-   nombre, y persistir/restaurar la configuración de hardware al conectar la
-   EVO (regla udev o servicio de usuario).
+3. **Hecho**: `evoctl hw input get|phantom|mute`, presets de mezcla interna
+   en la ventana (fábrica, sin monitoreo directo, entradas 1-2 a audífonos) y
+   `evoctl restore` + `evo8-restore.service` (lo arranca la regla udev con
+   `SYSTEMD_USER_WANTS` al conectar la EVO): restaura preamps, mezcla interna y
+   loop-back guardados. El phantom nunca se restaura solo. Requiere reinstalar
+   la regla udev (`sudo make udev`).
+   Pendiente: verificar con audio el orden de las entradas de la mezcla
+   interna (apagar IN 1 → OUT 1-2 y escuchar).
 4. **Ventana**: hecha. Pendiente: botón Calibrar en la tira COMP (corre
    `calibrate.run` en el worker y muestra el resultado), atajos de teclado,
    tema leído desde el shell wh01s17 si existe, y presets para la mezcla
@@ -234,8 +238,14 @@ sudo make udev                     # acceso USB (ya instalado en la máquina del
 - Agrupar escrituras en una sola `session()`: cada sesión corta el audio.
 - Nunca durante una clase/llamada; nunca reiniciar PipeWire ni el shell si el
   usuario está en llamada.
-- Si la EVO deja de responder (`-71` en `journalctl -k`), pedir al usuario que
-  la desconecte y reconecte; no insistir con resets.
+- **Solo enviar peticiones (incluso GET) a selectores que EVO.exe usa.** Un
+  GET a un selector inexistente (unidad 59, CS 3) no se rechaza: queda sin
+  respuesta (`ETIMEDOUT`) y el firmware deja de atender el control; la tarjeta
+  vuelve con `cannot get min/max` y sin nodos en PipeWire. Pasó dos veces.
+- Si la EVO deja de responder (`-71`/`-110` en `journalctl -k`, o PipeWire
+  sin "EVO8 Pro"), pedir al usuario que la desconecte y reconecte; no
+  insistir con resets. Tras reconectar: preamps a -8 dB, mezcla interna en
+  0 dB y quizá phantom apagado → `evoctl apply` restaura los preamps.
 
 ### Ingeniería inversa (para seguir mapeando)
 

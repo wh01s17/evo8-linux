@@ -115,3 +115,24 @@ RANGE `[-32512, 0, 256]` (-127..0 dB, paso 1 dB); EVO Control escribe
 EVO, los 40 cruces leen 0 dB. Entradas: 1-4 analógicas, 5-10 reproducción 1-6
 (orden de las fuentes de la XU 50: FU 11 y luego FU 10; pendiente de verificar
 con audio).
+
+### Controles de entrada (unidad 58) y salida (unidad 59)
+
+Mapeado desde `EvoSystemComponent::createInputControls` (orden de los
+botones: Gain, Phantom, Mute, SG Arm, Link) y sus handlers (`FUN_004cfe20`,
+`FUN_004cff80`, `FUN_004d0030`, `FUN_004d0170`, `FUN_004d0240`), todos vía
+`FUN_00658cb0` (4 bytes):
+
+| Unidad | CS | Canal | Valor | Uso |
+|--------|----|-------|-------|-----|
+| 58 | 0 | entrada-1 | 0/1 | phantom 48 V |
+| 58 | 1 | entrada-1 | dB×256 | ganancia (verificado: -3,5 / +24,5 dB) |
+| 58 | 2 | entrada-1 | 0/1 | mute |
+| 58 | 3 | entrada-1 (par) | 0/1 | link estéreo |
+| 58 | 4 | entrada-1 | bitmask | bit 0: Smart Gain armado |
+| 59 | 0 | 0 | dB×256 | volumen de salida (`FUN_004cfd30`) |
+| 59 | 1 | 0 | 0/1 | mute de salida (`FUN_004d00d0`) |
+
+**Advertencia**: un GET a la unidad 59, CS 3 quedó sin respuesta y colgó el
+control del firmware (hubo que desconectar la EVO). No sondear selectores que
+la app no usa.

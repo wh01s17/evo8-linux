@@ -23,7 +23,10 @@ PipeWire.
   PC), las salidas 3-4 o las entradas 1-2 / 3-4.
 - **Mezcla de monitoreo interna**: la matriz de 10 entradas (4 analógicas + 6
   del PC) × 4 salidas que EVO Control muestra como MASTER / ARTIST MIX, en dB.
-- **Preamps**: ganancia por entrada en dB (vía ALSA).
+- **Entradas**: ganancia del preamp en dB, phantom 48 V y silencio.
+- **Al conectarla**: la EVO olvida preamps, mezcla interna y loop-back al
+  apagarse; un servicio de usuario los restaura (el phantom no, por
+  seguridad).
 
 **Micrófono virtual para videollamadas (PipeWire)**
 
@@ -88,6 +91,8 @@ evoctl monitor input 1 on         # escuchar solo la entrada 1
 
 # Hardware de la EVO
 evoctl preamp set 2 24.5          # preamp de la entrada 2 en dB
+evoctl hw input phantom 2 on      # 48 V en la entrada 2
+evoctl hw input mute 3 on         # silenciar la entrada 3 en la EVO
 evoctl hw loopback set pc12       # loop-back = lo que suena por las salidas 1-2
 evoctl hw mix get                 # mezcla interna (dB)
 evoctl hw mix set 1 1 -6          # entrada 1 → salida 1 a -6 dB
