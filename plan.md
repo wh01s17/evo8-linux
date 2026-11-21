@@ -63,6 +63,7 @@ un cliente delgado.
                 │ usb.py      transporte UAC2 (suelta/devuelve el driver)   │
                 │ hw.py       loop-back y mezcla interna (unidades 51, 60)  │
                 │ profiles.py perfiles de tarjeta curados                   │
+                │ about.py    versión, firmware (sysfs), instalación        │
                 │ gui/        ventana PySide6: backend.py (QObject + worker │
                 │             thread), snapshot.py (pactl JSON → modelo),   │
                 │             meters.py (pw-record --raw), qml/             │
@@ -123,7 +124,11 @@ mezcla.suma = filter-chain: compL/compR (delay) ─► mix (Gain 1-4) ─► "Me
 - Hardware: cambios en espera; "Aplicar a la EVO" hace una sola sesión USB y
   relee. El último estado leído se guarda en `state.json` (`hw`).
 - QML sin dependencias del shell: `Theme.qml` (singleton), `PixelSlider`,
-  `Toggle`, `GlyphButton`, `VMeter`, `Strip`, `ConsolePage`, `HardwarePage`.
+  `Toggle`, `GlyphButton`, `VMeter`, `Strip`, `ConsolePage`, `HardwarePage`,
+  `AboutPage`.
+- ACERCA DE (`about.py`): solo lee archivos (metadatos, sysfs para el
+  firmware, rutas de config). Nunca habla con la EVO por USB. La versión sale
+  de `evo8.__version__` (pyproject la toma de ahí); `evoctl --version`.
 - Las dos pestañas reciben el tamaño del contenedor mediante anclas. Los
   `ScrollView` calculan el tamaño de su contenido a partir del espacio
   disponible. Con `StackLayout` las dos vistas juntas bloqueaban Qt antes

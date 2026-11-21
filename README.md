@@ -86,7 +86,7 @@ La EVO 8 tiene que estar en el perfil **Pro Audio**
 
 ### Ventana
 
-`evo8-mixer` abre el mezclador. Tiene dos pestañas:
+`evo8-mixer` abre el mezclador. Tiene tres pestañas:
 
 - **CONSOLA**: una tira por canal (entradas, Compartido, apps, la Mezcla y la
   salida) con preamp, fader, medidores, compartir, silencio, sincronía, monitor
@@ -96,6 +96,9 @@ La EVO 8 tiene que estar en el perfil **Pro Audio**
   un click y ajusta la sincronía.
 - **EVO 8**: el loop-back y la mezcla de monitoreo interna. Los cambios quedan
   en espera hasta que pulsas *Aplicar a la EVO*.
+- **ACERCA DE**: versión, enlaces al repo y a los issues, el firmware de la EVO
+  conectada y cómo está instalado. *Copiar para reportar un problema* deja esos
+  datos en el portapapeles (con `~` en lugar de tu carpeta personal).
 
 `evo8-mixer --evo` abre directo en la pestaña EVO 8. Hay una sola ventana: volver a
 lanzar `evo8-mixer` la trae al frente (y abre otra si la anterior dejó de
