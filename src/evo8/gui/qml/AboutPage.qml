@@ -13,7 +13,7 @@ ScrollView {
     readonly property var a: mixer.about
     readonly property var dev: a.device || ({})
 
-    onVisibleChanged: if (visible) mixer.refreshAbout()
+    onEnabledChanged: if (enabled) mixer.refreshAbout()
 
     component SectionTitle: Text {
         color: Theme.dim

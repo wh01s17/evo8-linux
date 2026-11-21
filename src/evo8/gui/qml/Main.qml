@@ -82,9 +82,12 @@ ApplicationWindow {
             }
         }
 
+        // Hidden on the other tabs but keeps its line: if it collapsed, the
+        // content area would change height and every console strip would lay
+        // itself out again on each tab switch (~0.5 s).
         Text {
             Layout.fillWidth: true
-            visible: window.page === 0
+            opacity: window.page === 0 ? 1 : 0
             text: window.m.gains !== null
                 ? "PRE  preamp de la EVO   ·   FADER  cuánto entra a la Mezcla   ·   SINC  alinea lo que tocas sobre Compartido   ·   PERFILES  cómo usa el sistema cada tarjeta   ·   󰑐  volver al estándar"
                 : "No se encontró la Mezcla (config/pipewire/pipewire.conf.d/20-mezcla.conf)"
@@ -94,25 +97,34 @@ ApplicationWindow {
             elide: Text.ElideRight
         }
 
-        // Give both scroll views the available space directly. Their content
+        // Give the scroll views the available space directly. Their content
         // sizes depend on that space and must stay out of layout negotiation.
+        //
+        // Pages are switched with opacity + enabled, not visible: toggling
+        // visible tells every one of a page's ~2000 items, and each Row or
+        // Column of fader/meter cells lays itself out again per child
+        // (~0.4 s on the console). A page at opacity 0 is skipped by the
+        // renderer, and a disabled one gets no input.
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
             ConsolePage {
                 anchors.fill: parent
-                visible: window.page === 0
+                opacity: window.page === 0 ? 1 : 0
+                enabled: window.page === 0
             }
 
             HardwarePage {
                 anchors.fill: parent
-                visible: window.page === 1
+                opacity: window.page === 1 ? 1 : 0
+                enabled: window.page === 1
             }
 
             AboutPage {
                 anchors.fill: parent
-                visible: window.page === 2
+                opacity: window.page === 2 ? 1 : 0
+                enabled: window.page === 2
             }
         }
     }
