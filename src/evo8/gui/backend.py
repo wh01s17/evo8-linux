@@ -22,7 +22,7 @@ import traceback
 
 from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 
-from .. import alsa, hw, mix, monitor, profiles, pw, state
+from .. import alsa, calibrate, hw, mix, monitor, profiles, pw, state
 from . import snapshot
 from .meters import Meters
 
@@ -86,6 +86,7 @@ class Backend(QObject):
             "gains": None, "delayMs": None, "preamp": None, "monitor": "",
             "inputMonitors": [], "cards": [], "sink": None, "mezcla": None,
             "escucha": None, "streams": [], "message": "",
+            "calibrating": False, "notice": "",
         }
         saved = state.load().get("hw") or {}
         self._hw: dict = {
@@ -171,6 +172,14 @@ class Backend(QObject):
             self._update(result)
         elif key == "slow" and result:
             self._update(result)
+        elif key == "calibrated":
+            if error:
+                self._model = dict(self._model, calibrating=False, notice="", message="SINC · " + error)
+            else:
+                self._hold.pop("delayMs", None)
+                self._model = dict(self._model, calibrating=False, delayMs=result["ms"],
+                                   notice=f"SINC · {result['summary']} · aplicado {result['ms']} ms")
+            self.modelChanged.emit()
         elif key == "hw-read":
             self._hw_done(result, error, "Leído de la EVO.")
         elif key == "hw-apply":
@@ -344,6 +353,26 @@ class Backend(QObject):
                  if c["name"] == card else c for c in self._model["cards"]]
         self._local("cards", cards)
         self._queue(f"profile:{card}", pw.run, "pactl", "set-card-profile", card, profile)
+
+    # ---- sync calibration ----
+    # Runs on its own thread: it takes ~15 s of playing, and the polls and
+    # writes must keep going meanwhile.
+    @Slot()
+    def calibrate(self) -> None:
+        if self._model["calibrating"]:
+            return
+        self._model = dict(self._model, calibrating=True,
+                           notice="SINC · toca un golpe corto y seco en cada click (los primeros 4 son de cuenta)…")
+        self.modelChanged.emit()
+
+        def job():
+            try:
+                r = calibrate.run(apply=True, on_progress=lambda _m: None)
+                self._done.emit("calibrated", {"ms": r.median_ms, "summary": r.summary}, None)
+            except Exception as e:
+                self._done.emit("calibrated", None, str(e))
+
+        threading.Thread(target=job, daemon=True).start()
 
     # ---- hardware (USB) ----
     def _hw_set(self, **changes) -> None:

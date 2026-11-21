@@ -155,6 +155,10 @@ ScrollView {
                     bottomText: F.delayText(bottomValue)
                     bottomStandard: 0
                     onBottomMoved: function(v) { mixer.setDelay(v) }
+                    actionText: page.m.calibrating ? "Escuchando…" : "Calibrar"
+                    actionEnabled: !page.m.calibrating && bottomEnabled
+                    actionTip: "Suena un click por Compartido: toca un golpe corto en cada uno y se mide el desfase"
+                    onActionClicked: mixer.calibrate()
                 }
             }
 

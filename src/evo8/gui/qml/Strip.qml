@@ -51,6 +51,12 @@ Item {
     property real bottomStandard: NaN
     property string bottomTip: ""
 
+    // Optional button under the bottom control (Compartido: calibrate).
+    property string actionText: ""
+    property bool actionEnabled: true
+    property string actionTip: ""
+    signal actionClicked()
+
     property bool monitorVisible: false
     property bool monitorChecked: false
     property bool monitorEnabled: true
@@ -321,6 +327,37 @@ Item {
             standard: strip.bottomStandard
             tip: strip.bottomTip
             onChanged: function(v) { strip.bottomMoved(v) }
+        }
+
+        Rectangle {
+            visible: strip.actionText !== ""
+            width: parent.width
+            height: actionLabel.implicitHeight + 10
+            radius: Theme.radius
+            opacity: strip.actionEnabled ? 1 : 0.5
+            color: actionMouse.containsMouse && strip.actionEnabled ? Theme.alpha(Theme.foreground, 0.12) : "transparent"
+            border.width: 1
+            border.color: Theme.alpha(Theme.foreground, strip.actionEnabled ? 0.45 : 0.2)
+            Text {
+                id: actionLabel
+                anchors.centerIn: parent
+                text: strip.actionText
+                color: Theme.foreground
+                font.family: Theme.font
+                font.pixelSize: Theme.caption
+            }
+            MouseArea {
+                id: actionMouse
+                anchors.fill: parent
+                enabled: strip.actionEnabled
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: strip.actionClicked()
+            }
+            Tip {
+                visible: actionMouse.containsMouse && strip.actionTip !== ""
+                text: strip.actionTip
+            }
         }
 
         Column {

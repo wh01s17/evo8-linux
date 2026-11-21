@@ -62,6 +62,16 @@ ApplicationWindow {
             Tab { index: 1; text: "EVO 8" }
             Item { Layout.fillWidth: true }
             Text {
+                text: window.m.notice || ""
+                visible: text !== "" && !(window.m.message)
+                color: Theme.accent
+                font.family: Theme.font
+                font.pixelSize: Theme.caption
+                font.bold: true
+                elide: Text.ElideLeft
+                Layout.maximumWidth: 900
+            }
+            Text {
                 text: window.m.message || ""
                 color: Theme.urgent
                 font.family: Theme.font
