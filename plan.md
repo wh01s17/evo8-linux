@@ -129,11 +129,18 @@ mezcla.suma = filter-chain: compL/compR (delay) ─► mix (Gain 1-4) ─► "Me
 - ACERCA DE (`about.py`): solo lee archivos (metadatos, sysfs para el
   firmware, rutas de config). Nunca habla con la EVO por USB. La versión sale
   de `evo8.__version__` (pyproject la toma de ahí); `evoctl --version`.
-- Las dos pestañas reciben el tamaño del contenedor mediante anclas. Los
+- Las pestañas reciben el tamaño del contenedor mediante anclas. Los
   `ScrollView` calculan el tamaño de su contenido a partir del espacio
-  disponible. Con `StackLayout` las dos vistas juntas bloqueaban Qt antes
-  del primer fotograma. `make test` comprueba el arranque y el cambio de
+  disponible. Con `StackLayout` las vistas juntas bloqueaban Qt antes del
+  primer fotograma. `make test` comprueba el arranque y el paso por cada
   pestaña si está instalado PySide6.
+- Se cambia de pestaña con `opacity` + `enabled`, **no** con `visible`:
+  `visible` avisa a los ~2000 elementos de la página y cada `Row`/`Column` de
+  celdas (faders de puntos, medidores) se reordena una vez por hijo. Medido:
+  ~450 ms por cambio con `visible`, ~20 ms así. La leyenda de CONSOLA también
+  conserva su línea en las otras pestañas (si se colapsa, cambia la altura y
+  todas las tiras se recalculan). En reposo no gasta más CPU: el renderer se
+  salta los nodos con opacidad 0.
 - Instancia única por `QLocalServer`: un segundo `evo8-mixer` manda `raise`
   y espera `ok` (1 s). Si la ventana anterior está colgada, el kernel igual
   acepta la conexión, por eso se exige la respuesta; sin ella se abre otra.
