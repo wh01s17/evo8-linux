@@ -22,7 +22,7 @@ import traceback
 
 from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 
-from .. import alsa, calibrate, hw, mix, monitor, profiles, pw, state
+from .. import about, alsa, calibrate, hw, mix, monitor, profiles, pw, state
 from . import snapshot
 from .meters import Meters
 
@@ -78,6 +78,7 @@ class Backend(QObject):
     modelChanged = Signal()
     metersChanged = Signal()
     hwChanged = Signal()
+    aboutChanged = Signal()
     _done = Signal(str, "QVariant", "QVariant")
 
     def __init__(self, parent=None):
@@ -97,6 +98,8 @@ class Backend(QObject):
             "busy": False, "message": "",
         }
         self._meters_view: dict = {}
+        self._about: dict = {}
+        self.refreshAbout()
         self._hold: dict[str, float] = {}
         self._before_mute: dict[int, float] = {}
         self._writes: dict[str, tuple] = {}
@@ -134,6 +137,24 @@ class Backend(QObject):
     model = Property("QVariant", _get_model, notify=modelChanged)
     meters = Property("QVariant", _get_meters, notify=metersChanged)
     hardware = Property("QVariant", _get_hw, notify=hwChanged)
+
+    def _get_about(self):
+        return self._about
+
+    about = Property("QVariant", _get_about, notify=aboutChanged)
+
+    # Files only (metadata, sysfs, config paths): cheap, no USB traffic.
+    @Slot()
+    def refreshAbout(self) -> None:
+        import PySide6
+        from PySide6.QtCore import qVersion
+        self._about = about.info({"PySide6": PySide6.__version__, "Qt": qVersion()})
+        self.aboutChanged.emit()
+
+    @Slot()
+    def copyAbout(self) -> None:
+        from PySide6.QtGui import QGuiApplication
+        QGuiApplication.clipboard().setText(about.report(self._about))
 
     def shutdown(self) -> None:
         self._meters.stop()

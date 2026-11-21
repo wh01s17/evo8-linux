@@ -8,7 +8,7 @@ import unittest
 
 @unittest.skipUnless(importlib.util.find_spec("PySide6"), "PySide6 not installed")
 class MixerWindow(unittest.TestCase):
-    def test_both_tabs_render_without_blocking_the_event_loop(self):
+    def test_every_tab_renders_without_blocking_the_event_loop(self):
         # A Qt layout loop can block the GUI thread before a Qt timer fires.
         # Run in a subprocess so the test runner can enforce the timeout.
         script = textwrap.dedent("""\
@@ -38,8 +38,8 @@ class MixerWindow(unittest.TestCase):
             window = engine.rootObjects()[0]
 
             def next_frame():
-                if window.property("page") == 0:
-                    window.setProperty("page", 1)
+                if window.property("page") < 2:
+                    window.setProperty("page", window.property("page") + 1)
                 else:
                     app.quit()
 

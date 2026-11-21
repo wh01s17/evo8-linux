@@ -60,6 +60,7 @@ ApplicationWindow {
             }
             Tab { index: 0; text: "CONSOLA" }
             Tab { index: 1; text: "EVO 8" }
+            Tab { index: 2; text: "ACERCA DE" }
             Item { Layout.fillWidth: true }
             Text {
                 text: window.m.notice || ""
@@ -107,6 +108,11 @@ ApplicationWindow {
             HardwarePage {
                 anchors.fill: parent
                 visible: window.page === 1
+            }
+
+            AboutPage {
+                anchors.fill: parent
+                visible: window.page === 2
             }
         }
     }
