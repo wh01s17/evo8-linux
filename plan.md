@@ -284,7 +284,7 @@ sudo make udev                     # acceso USB (ya instalado en la máquina del
 - **Publicar una versión**: seguir `PUBLISH.md` (changelog, versión, tag).
   El tag `vX.Y.Z` dispara `.github/workflows/release.yml`: PyPI (trusted
   publishing, entorno `pypi`) y la release de GitHub con la sección de
-  `CHANGELOG.md` (`tools/release_notes.py`). Publicada: **0.1.0**
+  `CHANGELOG.md` (`tools/release_notes.py`). Última publicada: **0.1.1**
   (2026-11-21, https://pypi.org/project/evo8-linux/).
 - Mientras se trabaja, anotar los cambios visibles en `## [Sin publicar]` de
   `CHANGELOG.md`.
