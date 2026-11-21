@@ -48,3 +48,41 @@ function hwDb(db) {
     if (db <= -127.5) return "off"
     return Math.round(db) + ""
 }
+
+// ---- EVO internal mix: level + pan <-> the left/right cells of one output pair ----
+// Pan law of a balance control: centred, both sides sit at the level (as the
+// EVO's factory mix, all at 0 dB); panning attenuates the other side by
+// 20·log10(1 - |pan|), reaching off at the edge. Levels below `floor` are off.
+var HW_OFF = -128
+
+function hwToLinear(db) { return db <= -127.5 ? 0 : Math.pow(10, db / 20) }
+
+// {level, pan, muted} from a left and right cell (dB, -128 = off).
+function hwLevelPan(l, r) {
+    if (l === null || r === null || l === undefined || r === undefined) return null
+    var gl = hwToLinear(l), gr = hwToLinear(r)
+    if (gl === 0 && gr === 0) return { level: HW_OFF, pan: 0, muted: true }
+    var level = Math.max(l, r)
+    var pan = 0
+    if (gl > gr) pan = -(1 - gr / gl)
+    else if (gr > gl) pan = 1 - gl / gr
+    return { level: level, pan: Math.round(pan * 100) / 100, muted: false }
+}
+
+// [left dB, right dB] for a level and pan; `floor` and below means off.
+function hwCells(level, pan, floor) {
+    if (level <= floor) return [HW_OFF, HW_OFF]
+    var p = Math.max(-1, Math.min(1, Number(pan) || 0))
+    function side(att) {
+        var k = 1 - att
+        if (k <= 0.001) return HW_OFF
+        return Math.max(floor, level + 20 * Math.log(k) / Math.LN10)
+    }
+    return [side(Math.max(0, p)), side(Math.max(0, -p))]
+}
+
+function panText(p) {
+    var v = Math.round(Number(p) * 100)
+    if (v === 0) return "C"
+    return (v < 0 ? "L " : "R ") + Math.abs(v)
+}

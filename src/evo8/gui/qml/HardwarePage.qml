@@ -186,12 +186,102 @@ ScrollView {
             }
         }
 
-        // ---- what the headphones hear directly ----
-        // One level per input and headphone pair: it sets both sides (L and R)
-        // of that pair in the internal mix, so a mono input sits centred.
+        // ---- what the headphones hear directly (EVO Control's mixer) ----
         Column {
-            spacing: 8
+            id: hpMix
+            spacing: 10
+            // 0 = audífonos 1 (outputs 1-2), 1 = audífonos 2 (outputs 3-4).
+            property int pair: 0
+            // Level and pan each strip had before muting, to bring them back.
+            property var beforeMute: ({})
+            readonly property var sources: [
+                { title: "IN 1", subtitle: "entrada 1", rows: [0] },
+                { title: "IN 2", subtitle: "entrada 2", rows: [1] },
+                { title: "IN 3", subtitle: "entrada 3", rows: [2] },
+                { title: "IN 4", subtitle: "entrada 4", rows: [3] },
+                { title: "PC 1-2", subtitle: "audio del PC", rows: [4, 5] },
+                { title: "PC 3-4", subtitle: "salidas 3-4", rows: [6, 7] },
+                { title: "PC 5-6", subtitle: "loop-back", rows: [8, 9] }
+            ]
+
+            // Cells a source touches in the selected pair: [row, out] for left
+            // and right; a stereo pair also owns its cross-feed cells.
+            function cells(src) {
+                var l = pair * 2, r = pair * 2 + 1
+                if (src.rows.length === 1) return { left: [src.rows[0], l], right: [src.rows[0], r], cross: [] }
+                return { left: [src.rows[0], l], right: [src.rows[1], r],
+                         cross: [[src.rows[0], r], [src.rows[1], l]] }
+            }
+            function stateOf(src) {
+                var c = cells(src)
+                return F.hwLevelPan(page.cellValue(c.left[0], c.left[1]), page.cellValue(c.right[0], c.right[1]))
+            }
+            function isPending(src) {
+                var c = cells(src), all = [c.left, c.right].concat(c.cross)
+                for (var i = 0; i < all.length; i++)
+                    if (page.pending[all[i][0] + "," + all[i][1]] !== undefined) return true
+                return false
+            }
+            function write(src, level, pan) {
+                var c = cells(src), v = F.hwCells(level, pan, page.offPosition)
+                mixer.hwSetCell(c.left[0], c.left[1], v[0])
+                mixer.hwSetCell(c.right[0], c.right[1], v[1])
+                // A stereo source plays left on left and right on right.
+                for (var i = 0; i < c.cross.length; i++) mixer.hwSetCell(c.cross[i][0], c.cross[i][1], F.HW_OFF)
+            }
+            function toggleMute(src) {
+                var st = stateOf(src), key = src.title + "/" + pair
+                if (!st) return
+                if (st.muted) {
+                    var back = beforeMute[key] || { level: 0, pan: 0 }
+                    write(src, back.level, back.pan)
+                } else {
+                    var m = Object.assign({}, beforeMute)
+                    m[key] = { level: st.level, pan: st.pan }
+                    beforeMute = m
+                    write(src, page.offPosition, 0)
+                }
+            }
+
             SectionTitle { text: "LO QUE OYES DIRECTO EN LOS AUDÍFONOS · SIN PASAR POR EL PC, SIN LATENCIA" }
+
+            // Which headphone mix is being edited.
+            Row {
+                spacing: 8
+                Repeater {
+                    model: ["AUDÍFONOS 1 · salidas 1-2", "AUDÍFONOS 2 · salidas 3-4"]
+                    Rectangle {
+                        required property var modelData
+                        required property int index
+                        readonly property bool current: hpMix.pair === index
+                        width: tabText.implicitWidth + 28
+                        height: tabText.implicitHeight + 14
+                        radius: Theme.radius
+                        color: current ? Theme.alpha(Theme.foreground, 0.12)
+                             : tabMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.06) : "transparent"
+                        border.width: 1
+                        border.color: current ? Theme.accent : Theme.alpha(Theme.foreground, 0.25)
+                        Text {
+                            id: tabText
+                            anchors.centerIn: parent
+                            text: modelData
+                            color: Theme.foreground
+                            font.family: Theme.font
+                            font.pixelSize: Theme.caption
+                            font.bold: parent.current
+                            font.letterSpacing: 1.1
+                        }
+                        MouseArea {
+                            id: tabMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: hpMix.pair = index
+                        }
+                    }
+                }
+            }
+
             Row {
                 spacing: 10
                 // Presets only stage changes; nothing reaches the EVO until "Aplicar".
@@ -224,78 +314,35 @@ ScrollView {
                 }
             }
 
-            Grid {
-                columns: 3
-                columnSpacing: 24
-                rowSpacing: 8
-                verticalItemAlignment: Grid.AlignVCenter
 
-                Item { width: 60; height: 1 }
-                SectionTitle { text: "AUDÍFONOS 1 (salidas 1-2)"; width: 230 }
-                SectionTitle { text: "AUDÍFONOS 2 (salidas 3-4)"; width: 230 }
-
+            Row {
+                spacing: 6
                 Repeater {
-                    model: 4 * 3
-                    Item {
-                        id: pairCell
-                        required property int index
-                        readonly property int row: Math.floor(index / 3)
-                        readonly property int pair: index % 3 - 1          // -1 = row label
-                        // The louder side of the pair, so an uneven pair never reads quieter.
-                        readonly property var db: {
-                            if (pair < 0) return null
-                            var l = page.cellValue(row, pair * 2), r = page.cellValue(row, pair * 2 + 1)
-                            if (l === null || r === null) return null
-                            return Math.max(l, r)
+                    model: hpMix.sources
+                    HwMixStrip {
+                        required property var modelData
+                        title: modelData.title
+                        subtitle: modelData.subtitle
+                        floor: page.offPosition
+                        state: page.hw.mix ? hpMix.stateOf(modelData) : null
+                        pending: hpMix.isPending(modelData)
+                        enabled: !page.hw.busy
+                        onLevelMoved: function(v) {
+                            var st = hpMix.stateOf(modelData)
+                            hpMix.write(modelData, v, st && !st.muted ? st.pan : 0)
                         }
-                        readonly property bool isPending: pair >= 0
-                            && (page.pending[row + "," + (pair * 2)] !== undefined
-                                || page.pending[row + "," + (pair * 2 + 1)] !== undefined)
-                        width: pair < 0 ? 60 : 230
-                        height: 26
-
-                        Text {
-                            visible: pairCell.pair < 0
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "IN " + (pairCell.row + 1)
-                            color: Theme.foreground
-                            font.family: Theme.font
-                            font.pixelSize: Theme.body
-                            font.bold: true
+                        onPanMoved: function(p) {
+                            var st = hpMix.stateOf(modelData)
+                            if (st && !st.muted) hpMix.write(modelData, st.level, p)
                         }
-                        Row {
-                            visible: pairCell.pair >= 0
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: 10
-                            PixelSlider {
-                                width: 160
-                                enabled: !page.hw.busy && pairCell.db !== null
-                                minimum: page.offPosition
-                                maximum: 0
-                                step: 1
-                                value: pairCell.db === null ? page.offPosition : Math.max(page.offPosition, pairCell.db)
-                                onMoved: function(v) {
-                                    var db = v <= page.offPosition ? -128 : v
-                                    mixer.hwSetCell(pairCell.row, pairCell.pair * 2, db)
-                                    mixer.hwSetCell(pairCell.row, pairCell.pair * 2 + 1, db)
-                                }
-                            }
-                            Text {
-                                width: 60
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: pairCell.db === null ? "?" : (pairCell.db <= -127.5 ? "apagado" : Math.round(pairCell.db) + " dB")
-                                color: pairCell.isPending ? Theme.accent : Theme.foreground
-                                font.family: Theme.font
-                                font.pixelSize: Theme.caption
-                                font.bold: pairCell.isPending
-                            }
-                        }
+                        onMuteToggled: hpMix.toggleMute(modelData)
                     }
                 }
             }
             Text {
-                text: page.hw.mix ? "Mueve la barra a la izquierda del todo para dejar de oír esa entrada. Los cambios llegan a la EVO al pulsar «Aplicar a la EVO»."
-                                  : "Pulsa «Leer de la EVO» para ver y cambiar estos valores."
+                text: page.hw.mix
+                    ? "Fader abajo del todo o 󰝟 = no oír esa fuente. Los cambios llegan a la EVO al pulsar «Aplicar a la EVO»."
+                    : "Pulsa «Leer de la EVO» para ver y cambiar estos valores."
                 color: Theme.dim
                 font.family: Theme.font
                 font.pixelSize: Theme.caption
