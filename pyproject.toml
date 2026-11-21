@@ -18,5 +18,11 @@ gui = ["PySide6>=6.6"]
 [project.scripts]
 evoctl = "evo8.cli:main"
 
+[project.gui-scripts]
+evo8-mixer = "evo8.gui.app:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"evo8.gui" = ["qml/*.qml", "qml/*.js", "qml/qmldir"]

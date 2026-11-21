@@ -7,15 +7,26 @@ REPO        := $(abspath .)
 # Development install: the launcher runs the package straight from this
 # checkout, and the PipeWire config is linked, so edits apply without
 # reinstalling.
+# A config dir that is itself a symlink (stow folds whole directories) is
+# unfolded into a real directory of per-file links first, so our links never
+# land inside someone else's tree.
+UNFOLD = d="$(1)"; if [ -L "$$d" ]; then t=$$(readlink -f "$$d"); rm "$$d"; mkdir -p "$$d"; \
+	for f in "$$t"/* "$$t"/.[!.]*; do [ -e "$$f" ] && ln -s "$$f" "$$d/"; done; fi; mkdir -p "$$d"
+
 install:
-	install -d $(PREFIX)/bin $(CONFIG)/pipewire/pipewire.conf.d $(CONFIG)/pipewire/pipewire-pulse.conf.d
+	install -d $(PREFIX)/bin
+	@$(call UNFOLD,$(CONFIG)/pipewire/pipewire.conf.d)
+	@$(call UNFOLD,$(CONFIG)/pipewire/pipewire-pulse.conf.d)
 	printf '#!/bin/sh\nPYTHONPATH="$(REPO)/src$${PYTHONPATH:+:$$PYTHONPATH}" exec python3 -m evo8.cli "$$@"\n' > $(PREFIX)/bin/evoctl
-	chmod +x $(PREFIX)/bin/evoctl
+	printf '#!/bin/sh\nPYTHONPATH="$(REPO)/src$${PYTHONPATH:+:$$PYTHONPATH}" exec python3 -m evo8.gui.app "$$@"\n' > $(PREFIX)/bin/evo8-mixer
+	chmod +x $(PREFIX)/bin/evoctl $(PREFIX)/bin/evo8-mixer
+	install -d $(PREFIX)/share/applications
+	install -m 644 data/evo8-mixer.desktop $(PREFIX)/share/applications/evo8-mixer.desktop
 	ln -sfn $(REPO)/config/pipewire/pipewire.conf.d/20-mezcla.conf $(CONFIG)/pipewire/pipewire.conf.d/20-mezcla.conf
 	ln -sfn $(REPO)/config/pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf $(CONFIG)/pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf
 
 uninstall:
-	rm -f $(PREFIX)/bin/evoctl
+	rm -f $(PREFIX)/bin/evoctl $(PREFIX)/bin/evo8-mixer $(PREFIX)/share/applications/evo8-mixer.desktop
 	rm -f $(CONFIG)/pipewire/pipewire.conf.d/20-mezcla.conf
 	rm -f $(CONFIG)/pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf
 
