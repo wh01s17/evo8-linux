@@ -6,7 +6,8 @@ import "."
 Item {
     id: root
     property var cards: []
-    width: Theme.stripWidth * 1.9
+    property real unit: Theme.stripWidth
+    width: unit * 1.9
     height: list.implicitHeight + 16
 
     Rectangle {

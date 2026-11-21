@@ -64,8 +64,14 @@ Item {
     signal monitorToggled()
 
     readonly property bool hasStandard: !isNaN(standard)
+    // Width of a regular strip (the master is 1.3×) and fader height; the
+    // console sets both so the strips fill the window.
+    property real unit: Theme.stripWidth
+    property real faderHeight: Theme.faderHeight
+    // Everything but the fader.
+    readonly property real chromeHeight: column.implicitHeight + 16 - faderArea.height
 
-    width: master ? Theme.stripWidth * 1.3 : Theme.stripWidth
+    width: master ? unit * 1.3 : unit
     height: column.implicitHeight + 16
 
     Rectangle {
@@ -220,8 +226,9 @@ Item {
 
         // Meters beside the fader.
         Item {
+            id: faderArea
             width: parent.width
-            height: Theme.faderHeight
+            height: strip.faderHeight
 
             Text {
                 visible: !strip.faderVisible

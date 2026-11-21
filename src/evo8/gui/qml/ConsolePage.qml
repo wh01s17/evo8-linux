@@ -44,6 +44,19 @@ ScrollView {
         return groups
     }
 
+    // Strip width that fills the window: the room left after gaps and
+    // dividers, shared by every strip (the master counts 1.3, profiles 1.9).
+    readonly property int nInputs: preamp ? preamp.gains.length : 2
+    readonly property int nApps: m.streams.length
+    readonly property bool showProfiles: m.cards.length > 0
+    readonly property int nGroups: 4 + (nApps > 0 ? 1 : 0) + (showProfiles ? 1 : 0)
+    readonly property real units: nInputs + 1 + nApps + 1.3 + outputGroups.length + (showProfiles ? 1.9 : 0)
+    readonly property int innerGaps: (nInputs - 1) + Math.max(0, nApps - 1) + Math.max(0, outputGroups.length - 1)
+    readonly property real unit: Math.max(Theme.stripWidth,
+        (availableWidth - (2 * nGroups - 2) * 14 - (nGroups - 1) - innerGaps * 6 - 4) / units)
+    // Fader height that fills the window below the group titles.
+    readonly property real faderHeight: Math.max(140, availableHeight - 30 - compStrip.chromeHeight)
+
     function groupVolume(channels) {
         var v = 0
         for (var i = 0; i < channels.length; i++) v = Math.max(v, m.sink.volumes[channels[i]] || 0)
@@ -56,7 +69,7 @@ ScrollView {
 
         Row {
             id: consoleRow
-            anchors.horizontalCenter: parent.horizontalCenter
+            x: 2
             spacing: 14
 
             // ---- inputs ----
@@ -65,6 +78,8 @@ ScrollView {
                 Repeater {
                     model: page.preamp ? page.preamp.gains.length : 2
                     Strip {
+                        unit: page.unit
+                        faderHeight: page.faderHeight
                         required property int index
                         readonly property bool inMix: index < 2
                         title: "IN " + (index + 1)
@@ -102,15 +117,18 @@ ScrollView {
                 }
             }
 
-            Divider {}
+            Divider { height: page.availableHeight - 8 }
 
             // ---- Compartido ----
             StripGroup {
                 title: "COMPARTIDO"
                 Strip {
+                    id: compStrip
+                    unit: page.unit
+                    faderHeight: page.faderHeight
                     readonly property var esc: page.m.escucha
                     title: "COMP"
-                    subtitle: "lo que envías aquí"
+                    subtitle: "música y apps"
                     topLabel: "OÍR"
                     topTip: "Cuánto oyes Compartido (no cambia lo que sale a la llamada)"
                     topEnabled: !page.monitorOn && !!esc
@@ -140,7 +158,7 @@ ScrollView {
                 }
             }
 
-            Divider { visible: page.m.streams.length > 0 }
+            Divider { height: page.availableHeight - 8; visible: page.m.streams.length > 0 }
 
             // ---- apps ----
             StripGroup {
@@ -149,6 +167,8 @@ ScrollView {
                 Repeater {
                     model: page.m.streams
                     Strip {
+                        unit: page.unit
+                        faderHeight: page.faderHeight
                         required property var modelData
                         title: modelData.label
                         subtitle: modelData.shared ? "en Compartido" : "solo salida"
@@ -166,12 +186,14 @@ ScrollView {
                 }
             }
 
-            Divider {}
+            Divider { height: page.availableHeight - 8 }
 
             // ---- Mezcla master ----
             StripGroup {
                 title: "SALE A LA LLAMADA"
                 Strip {
+                    unit: page.unit
+                    faderHeight: page.faderHeight
                     readonly property var mz: page.m.mezcla
                     master: true
                     title: "MEZCLA"
@@ -191,7 +213,7 @@ ScrollView {
                 }
             }
 
-            Divider {}
+            Divider { height: page.availableHeight - 8 }
 
             // ---- selected output ----
             StripGroup {
@@ -199,6 +221,8 @@ ScrollView {
                 Repeater {
                     model: page.outputGroups
                     Strip {
+                        unit: page.unit
+                        faderHeight: page.faderHeight
                         required property var modelData
                         required property int index
                         title: modelData.label
@@ -214,13 +238,13 @@ ScrollView {
                 }
             }
 
-            Divider { visible: page.m.cards.length > 0 }
+            Divider { height: page.availableHeight - 8; visible: page.m.cards.length > 0 }
 
             // ---- card profiles ----
             StripGroup {
                 visible: page.m.cards.length > 0
                 title: "PERFILES"
-                CardProfiles { cards: page.m.cards }
+                CardProfiles { cards: page.m.cards; unit: page.unit }
             }
         }
     }
