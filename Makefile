@@ -25,11 +25,14 @@ install:
 	-systemctl --user daemon-reload
 	install -d $(PREFIX)/share/applications
 	install -m 644 data/evo8-mixer.desktop $(PREFIX)/share/applications/evo8-mixer.desktop
+	install -Dm644 src/evo8/gui/evo8-mixer.svg $(PREFIX)/share/icons/hicolor/scalable/apps/evo8-mixer.svg
+	-gtk-update-icon-cache -q $(PREFIX)/share/icons/hicolor 2>/dev/null
 	ln -sfn $(REPO)/config/pipewire/pipewire.conf.d/20-mezcla.conf $(CONFIG)/pipewire/pipewire.conf.d/20-mezcla.conf
 	ln -sfn $(REPO)/config/pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf $(CONFIG)/pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf
 
 uninstall:
 	rm -f $(PREFIX)/bin/evoctl $(PREFIX)/bin/evo8-mixer $(PREFIX)/share/applications/evo8-mixer.desktop
+	rm -f $(PREFIX)/share/icons/hicolor/scalable/apps/evo8-mixer.svg
 	rm -f $(CONFIG)/systemd/user/evo8-restore.service
 	rm -f $(CONFIG)/pipewire/pipewire.conf.d/20-mezcla.conf
 	rm -f $(CONFIG)/pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf

@@ -8,11 +8,12 @@ import sys
 from pathlib import Path
 
 QML_DIR = Path(__file__).with_name("qml")
+ICON = Path(__file__).with_name("evo8-mixer.svg")
 
 
 def main(argv: list[str] | None = None) -> int:
     try:
-        from PySide6.QtGui import QGuiApplication
+        from PySide6.QtGui import QGuiApplication, QIcon
         from PySide6.QtQml import QQmlApplicationEngine
         from PySide6.QtQuickControls2 import QQuickStyle
     except ImportError:
@@ -27,6 +28,9 @@ def main(argv: list[str] | None = None) -> int:
     QGuiApplication.setDesktopFileName("evo8-mixer")   # Wayland app id
     QQuickStyle.setStyle("Basic")
     app = QGuiApplication(argv if argv is not None else sys.argv)
+    # Wayland shells take the icon from the desktop entry (Icon=evo8-mixer);
+    # this one covers X11 and running from the source tree.
+    app.setWindowIcon(QIcon(str(ICON)))
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     # One window at a time: a second launch asks the running one to come to

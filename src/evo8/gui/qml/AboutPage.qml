@@ -90,8 +90,18 @@ ScrollView {
             width: columns.colWidth
             spacing: 18
 
-            Column {
+            Row {
                 width: parent.width
+                spacing: 18
+                Image {
+                    source: "../evo8-mixer.svg"
+                    width: 72
+                    height: 72
+                    sourceSize: Qt.size(144, 144)
+                    smooth: true
+                }
+            Column {
+                width: parent.width - 90
                 spacing: 6
                 Row {
                     spacing: 12
@@ -120,6 +130,7 @@ ScrollView {
                     wrapMode: Text.WordWrap
                     lineHeight: 1.2
                 }
+            }
             }
 
             Column {

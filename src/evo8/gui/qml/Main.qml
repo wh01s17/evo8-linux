@@ -51,7 +51,15 @@ ApplicationWindow {
         RowLayout {
             Layout.fillWidth: true
             spacing: 28
+            Image {
+                source: "../evo8-mixer.svg"
+                Layout.preferredWidth: 22
+                Layout.preferredHeight: 22
+                sourceSize: Qt.size(44, 44)
+                smooth: true
+            }
             Text {
+                Layout.leftMargin: -18
                 text: "Mezclador"
                 color: Theme.foreground
                 font.family: Theme.font

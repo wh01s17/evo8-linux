@@ -3,6 +3,6 @@ Type=Application
 Name=Mezclador EVO 8
 Comment=Mezcla, monitor y hardware del Audient EVO 8
 Exec=evo8-mixer
-Icon=audio-card
+Icon=evo8-mixer
 Categories=AudioVideo;Audio;Mixer;
 StartupWMClass=evo8-mixer
