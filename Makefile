@@ -20,6 +20,9 @@ install:
 	printf '#!/bin/sh\nPYTHONPATH="$(REPO)/src$${PYTHONPATH:+:$$PYTHONPATH}" exec python3 -m evo8.cli "$$@"\n' > $(PREFIX)/bin/evoctl
 	printf '#!/bin/sh\nPYTHONPATH="$(REPO)/src$${PYTHONPATH:+:$$PYTHONPATH}" exec python3 -m evo8.gui.app "$$@"\n' > $(PREFIX)/bin/evo8-mixer
 	chmod +x $(PREFIX)/bin/evoctl $(PREFIX)/bin/evo8-mixer
+	@$(call UNFOLD,$(CONFIG)/systemd/user)
+	install -m 644 data/evo8-restore.service $(CONFIG)/systemd/user/evo8-restore.service
+	-systemctl --user daemon-reload
 	install -d $(PREFIX)/share/applications
 	install -m 644 data/evo8-mixer.desktop $(PREFIX)/share/applications/evo8-mixer.desktop
 	ln -sfn $(REPO)/config/pipewire/pipewire.conf.d/20-mezcla.conf $(CONFIG)/pipewire/pipewire.conf.d/20-mezcla.conf
@@ -27,6 +30,7 @@ install:
 
 uninstall:
 	rm -f $(PREFIX)/bin/evoctl $(PREFIX)/bin/evo8-mixer $(PREFIX)/share/applications/evo8-mixer.desktop
+	rm -f $(CONFIG)/systemd/user/evo8-restore.service
 	rm -f $(CONFIG)/pipewire/pipewire.conf.d/20-mezcla.conf
 	rm -f $(CONFIG)/pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf
 

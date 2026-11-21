@@ -2,3 +2,6 @@
 # (mixer, loop-back, monitoring) without root. The audio itself keeps going
 # through the kernel's snd-usb-audio driver.
 SUBSYSTEM=="usb", ATTRS{idVendor}=="2708", ATTRS{idProduct}=="0007", TAG+="uaccess"
+# When it is plugged in, the user's evo8-restore.service puts back the saved
+# preamps, internal monitor mix and loop-back (the EVO forgets them).
+SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="2708", ATTRS{idProduct}=="0007", TAG+="systemd", ENV{SYSTEMD_USER_WANTS}+="evo8-restore.service"

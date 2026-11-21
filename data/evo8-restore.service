@@ -1,0 +1,8 @@
+[Unit]
+Description=Restaurar los ajustes del Audient EVO 8 al conectarla
+
+[Service]
+Type=oneshot
+# Let snd-usb-audio and PipeWire finish bringing the card up first.
+ExecStartPre=/bin/sleep 3
+ExecStart=%h/.local/bin/evoctl restore
