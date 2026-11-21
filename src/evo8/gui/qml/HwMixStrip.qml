@@ -13,8 +13,19 @@ Item {
     property bool pending: false
     property real floor: -61
     property real faderHeight: Theme.faderHeight * 0.8
-    // Everything but the fader, so a parent can size the fader to fill a height.
-    readonly property real chromeHeight: col.implicitHeight + 16 - faderBox.height
+    // Everything but the fader, so a parent can size the fader to fill a
+    // height. Summed from the other children (never from the column's own
+    // height, which includes the fader and would make a binding loop).
+    readonly property real chromeHeight: {
+        var h = 16, n = 0
+        for (var i = 0; i < col.children.length; i++) {
+            var c = col.children[i]
+            if (c === faderBox || !c.visible) continue
+            h += c.height
+            n++
+        }
+        return h + col.spacing * n
+    }
     signal levelMoved(real level)
     signal panMoved(real pan)
     signal muteToggled()

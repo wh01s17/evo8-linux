@@ -74,8 +74,18 @@ Item {
     // console sets both so the strips fill the window.
     property real unit: Theme.stripWidth
     property real faderHeight: Theme.faderHeight
-    // Everything but the fader.
-    readonly property real chromeHeight: column.implicitHeight + 16 - faderArea.height
+    // Everything but the fader, summed from the other children (the
+    // column's own height includes the fader: that would be a binding loop).
+    readonly property real chromeHeight: {
+        var h = 16, n = 0
+        for (var i = 0; i < column.children.length; i++) {
+            var c = column.children[i]
+            if (c === faderArea || !c.visible) continue
+            h += c.height
+            n++
+        }
+        return h + column.spacing * n
+    }
 
     width: master ? unit * 1.3 : unit
     height: column.implicitHeight + 16
