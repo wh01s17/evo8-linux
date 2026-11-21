@@ -15,7 +15,7 @@ jobs:
       - name: Install dependencies
         run: |
           pacman -Syu --noconfirm --needed git make python python-pyusb pyside6 nodejs
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Run tests
         env:
           QT_QPA_PLATFORM: offscreen
@@ -30,7 +30,7 @@ jobs:
       - name: Install build tools
         run: |
           pacman -Syu --noconfirm --needed base-devel git namcap sudo
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0   # pkgver counts commits
       - name: Prepare an unprivileged builder (makepkg refuses root)
@@ -63,7 +63,7 @@ jobs:
           grep -q '^ExecStart=/usr/bin/evoctl restore' /usr/lib/systemd/user/evo8-restore.service
           test -f /usr/share/pipewire/pipewire.conf.d/20-mezcla.conf
           test -f /usr/lib/udev/rules.d/70-audient-evo8.rules
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: evo8-linux-git
           path: /home/builder/pkg/*.pkg.tar.zst
