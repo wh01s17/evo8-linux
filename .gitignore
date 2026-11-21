@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.venv/
+
+# local agent tooling (autoskills)
+.agents/
+.claude/
+.kiro/
+skills-lock.json

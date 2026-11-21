@@ -1,0 +1,4 @@
+# Audient EVO 8 (2708:0007): let the logged-in user send USB control requests
+# (mixer, loop-back, monitoring) without root. The audio itself keeps going
+# through the kernel's snd-usb-audio driver.
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2708", ATTRS{idProduct}=="0007", TAG+="uaccess"

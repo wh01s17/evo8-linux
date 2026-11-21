@@ -1,0 +1,114 @@
+import array
+import math
+import tempfile
+import unittest
+import wave
+from pathlib import Path
+from unittest import mock
+
+from evo8 import alsa, calibrate, pw
+
+PW_LINK_L = """\
+Mezcla:capture_MONO
+  |-> alsa_output.usb-Audient_EVO8-00.pro-output-0:playback_AUX0
+  |-> alsa_output.usb-Audient_EVO8-00.pro-output-0:playback_AUX1
+  |-> Meet:input_MONO
+mezcla.entradas:input_AUX0
+  |<- alsa_input.usb-Audient_EVO8-00.pro-input-0:capture_AUX0
+alsa_input.usb-Audient_EVO8-00.pro-input-0:capture_AUX0
+  |-> mezcla.entradas:input_AUX0
+"""
+
+AMIXER_PREAMP = """\
+numid=3,iface=MIXER,name='Mic Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=4,min=0,max=116,step=0
+  : values=9,65,0,0
+  | dBminmax-min=-8.00dB,max=50.00dB
+"""
+
+
+class PwParsing(unittest.TestCase):
+    def test_links_from_reads_only_that_port(self):
+        with mock.patch.object(pw, "run", return_value=PW_LINK_L):
+            self.assertEqual(pw.links_from("Mezcla:capture_MONO"), [
+                "alsa_output.usb-Audient_EVO8-00.pro-output-0:playback_AUX0",
+                "alsa_output.usb-Audient_EVO8-00.pro-output-0:playback_AUX1",
+                "Meet:input_MONO",
+            ])
+            self.assertEqual(pw.links_from("alsa_input.usb-Audient_EVO8-00.pro-input-0:capture_AUX0"),
+                             ["mezcla.entradas:input_AUX0"])
+            self.assertEqual(pw.links_from("nope"), [])
+
+    def test_force_quantum(self):
+        out = "Found \"settings\" metadata 35\nupdate: id:0 key:'clock.force-quantum' value:'128' type:''\n"
+        with mock.patch.object(pw, "run", return_value=out):
+            self.assertEqual(pw.force_quantum(), 128)
+
+
+class Preamp(unittest.TestCase):
+    def test_get_in_db(self):
+        with mock.patch.object(pw, "run", return_value=AMIXER_PREAMP):
+            self.assertEqual(alsa.preamp(), {"min": -8.0, "max": 50.0, "step": 0.5,
+                                             "gains": [-3.5, 24.5, -8.0, -8.0]})
+
+    def test_set_rounds_and_clamps_one_input(self):
+        calls = []
+
+        def fake(*args, **kw):
+            calls.append(args)
+            return AMIXER_PREAMP
+
+        with mock.patch.object(pw, "run", side_effect=fake):
+            alsa.set_preamp(2, 20.3)     # 20.5 dB -> raw 57
+            alsa.set_preamp(1, 99)       # clamped to +50 dB -> raw 116
+        self.assertEqual(calls[1][-1], "9,57,0,0")
+        self.assertEqual(calls[3][-1], "116,65,0,0")
+        with mock.patch.object(pw, "run", return_value=AMIXER_PREAMP):
+            with self.assertRaises(alsa.AlsaError):
+                alsa.set_preamp(5, 0)
+
+
+def synthetic_recording(path: Path, lag_ms: float, hits: bool = True) -> None:
+    """4-channel take: clicks on RL/RR, a hit `lag_ms` later on FL."""
+    rate, bpm, beats, lead = 48000, calibrate.BPM, calibrate.BEATS, calibrate.LEAD_IN
+    period = 60 / bpm
+    total = int(rate * (lead + beats * period + 1))
+    data = array.array("h", [0] * total * 4)
+    burst = int(rate * 0.01)
+    for b in range(beats):
+        c = int(rate * (lead + b * period))
+        h = c + int(rate * lag_ms / 1000)
+        for i in range(burst):
+            v = int(20000 * math.sin(2 * math.pi * 1500 * i / rate))
+            data[4 * (c + i) + 2] = v
+            data[4 * (c + i) + 3] = v
+            if hits:
+                data[4 * (h + i) + 0] = v
+    with wave.open(str(path), "w") as w:
+        w.setnchannels(4)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(data.tobytes())
+
+
+class Calibration(unittest.TestCase):
+    def test_measures_the_lag(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rec = Path(tmp) / "rec.wav"
+            synthetic_recording(rec, 85)
+            r = calibrate.analyse(rec)
+        self.assertEqual(r.clicks, calibrate.BEATS - calibrate.COUNT_IN)
+        self.assertEqual(r.hits, r.clicks)
+        self.assertAlmostEqual(r.median_ms, 85, delta=2)
+        self.assertIn("Golpes medidos", r.summary)
+
+    def test_no_playing_is_an_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rec = Path(tmp) / "rec.wav"
+            synthetic_recording(rec, 85, hits=False)
+            with self.assertRaises(calibrate.CalibrationError):
+                calibrate.analyse(rec)
+
+
+if __name__ == "__main__":
+    unittest.main()
