@@ -42,6 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
     l.add_subparsers(dest="action", required=True).add_parser("save", help="guardar el nivel actual")
 
     sub.add_parser("apply", help="restaurar lo guardado: ganancias, retardo, escucha y preamps")
+    sub.add_parser("restore", help="al conectar la EVO: preamps, mezcla interna y loop-back guardados")
 
     mo = sub.add_parser("monitor", help="escuchar la Mezcla o entradas sueltas por la salida")
     mos = mo.add_subparsers(dest="action", required=True)
@@ -78,6 +79,13 @@ def build_parser() -> argparse.ArgumentParser:
     lbs = lb.add_subparsers(dest="action", required=True)
     lbs.add_parser("get")
     lbs.add_parser("set").add_argument("source", help="loopback | pc12 | pc34 | in12 | in34")
+    hi = hws.add_parser("input", help="phantom 48 V y mute por entrada")
+    his = hi.add_subparsers(dest="action", required=True)
+    his.add_parser("get", help="estado de las 4 entradas, JSON")
+    for name in ("phantom", "mute"):
+        s = his.add_parser(name, help=f"{name} de una entrada")
+        s.add_argument("n", type=int)
+        s.add_argument("state", choices=("on", "off"))
     hm = hws.add_parser("mix", help="mezcla de monitoreo interna (10 entradas × 4 salidas)")
     hms = hm.add_subparsers(dest="action", required=True)
     hms.add_parser("get", help="matriz en dB, JSON")
@@ -118,6 +126,18 @@ def _dispatch(a) -> int:
     elif a.cmd == "apply":
         mix.apply()
         alsa.restore_preamp()
+    elif a.cmd == "restore":
+        import time
+        from . import hw, state
+        for _ in range(20):            # the card's controls appear a moment after plugging
+            try:
+                alsa.preamp()
+                break
+            except alsa.AlsaError:
+                time.sleep(0.5)
+        alsa.restore_preamp()
+        hw.restore(state.load().get("hw") or {})
+        mix.apply()
     elif a.cmd == "monitor":
         if a.action == "status":
             print(monitor.status())
@@ -151,7 +171,13 @@ def _dispatch(a) -> int:
             apps.set_card_profile(a.card, a.profile)
     elif a.cmd == "hw":
         from . import hw
-        if a.area == "loopback":
+        if a.area == "input":
+            if a.action == "get":
+                _json(hw.inputs_get())
+            else:
+                flags = {a.n - 1: a.state == "on"}
+                hw.apply([], None, **{a.action: flags})
+        elif a.area == "loopback":
             if a.action == "get":
                 _json(hw.loopback_get())
             else:
