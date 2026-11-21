@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import signal
 import sys
 from pathlib import Path
@@ -18,6 +19,8 @@ def main(argv: list[str] | None = None) -> int:
         print("falta PySide6 (pacman -S pyside6)", file=sys.stderr)
         return 1
 
+    from PySide6.QtNetwork import QLocalServer, QLocalSocket
+
     from .backend import Backend
 
     QGuiApplication.setApplicationName("evo8-mixer")
@@ -25,6 +28,19 @@ def main(argv: list[str] | None = None) -> int:
     QQuickStyle.setStyle("Basic")
     app = QGuiApplication(argv if argv is not None else sys.argv)
     signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+    # One window at a time: a second launch asks the running one to come to
+    # the front and exits.
+    name = f"evo8-mixer-{os.getuid()}"
+    probe = QLocalSocket()
+    probe.connectToServer(name)
+    if probe.waitForConnected(300):
+        probe.write(b"raise\n")
+        probe.waitForBytesWritten(300)
+        return 0
+    QLocalServer.removeServer(name)
+    server = QLocalServer()
+    server.listen(name)
 
     backend = Backend()
     engine = QQmlApplicationEngine()
@@ -35,6 +51,17 @@ def main(argv: list[str] | None = None) -> int:
     if not engine.rootObjects():
         backend.shutdown()
         return 1
+    window = engine.rootObjects()[0]
+
+    def raise_window():
+        sock = server.nextPendingConnection()
+        if sock:
+            sock.close()
+        window.show()
+        window.raise_()
+        window.requestActivate()
+
+    server.newConnection.connect(raise_window)
     code = app.exec()
     backend.shutdown()
     return code
