@@ -62,6 +62,10 @@ un cliente delgado.
                 │ calibrate.py medición de sincronía (click + onsets)       │
                 │ usb.py      transporte UAC2 (suelta/devuelve el driver)   │
                 │ hw.py       loop-back y mezcla interna (unidades 51, 60)  │
+                │ profiles.py perfiles de tarjeta curados                   │
+                │ gui/        ventana PySide6: backend.py (QObject + worker │
+                │             thread), snapshot.py (pactl JSON → modelo),   │
+                │             meters.py (pw-record --raw), qml/             │
                 │ state.py    estado persistente (~/.local/state/evo8)      │
                 └───────────────────────────────────────────────────────────┘
  config/pipewire/  grafo de la Mezcla (filter-chain + loopbacks)
@@ -105,7 +109,23 @@ mezcla.suma = filter-chain: compL/compR (delay) ─► mix (Gain 1-4) ─► "Me
 - `pw-link --wait` al enlazar, para que la lectura siguiente vea el enlace.
 - `status` se auto-repara (marcador en `$XDG_RUNTIME_DIR/evo8-monitor`).
 
-### 3.3 Control del hardware por USB (usb.py, hw.py)
+### 3.3 Ventana (src/evo8/gui)
+
+- `backend.Backend` es el objeto `mixer` en QML: propiedades `model`,
+  `meters`, `hardware` (QVariant) y slots de escritura.
+- Todo lo lento corre en un único hilo de trabajo, en orden. Sondeo: 1 s para
+  pactl (dispositivos, streams, volúmenes), 3 s para ganancias, retardo,
+  preamps, monitor y perfiles. Las escrituras se aplican al modelo al instante,
+  se agrupan 60 ms por clave y el valor sondeado de esa clave se ignora 1,5 s.
+- Volúmenes en la escala de PulseAudio (raw/65536), como pavucontrol.
+- Medidores: un `pw-record --raw` por fuente (mezcla.suma 4 canales,
+  Mezcla 1 canal), pasivos y con `node.name = evo8.meter.*`.
+- Hardware: cambios en espera; "Aplicar a la EVO" hace una sola sesión USB y
+  relee. El último estado leído se guarda en `state.json` (`hw`).
+- QML sin dependencias del shell: `Theme.qml` (singleton), `PixelSlider`,
+  `Toggle`, `GlyphButton`, `VMeter`, `Strip`, `ConsolePage`, `HardwarePage`.
+
+### 3.4 Control del hardware por USB (usb.py, hw.py)
 
 Detalle completo en `docs/protocolo-usb.md`. Resumen:
 
@@ -143,8 +163,17 @@ MonitorController del EVO 16 (no aplica al EVO 8).
 - Monitor general y por entrada, con el bug del bucle corregido.
 - Calibración de sincronía (análisis probado con señal sintética: 85 ms → 85 ms).
 - Transporte USB y `evoctl hw loopback get|set`, `evoctl hw mix get|set`.
-- Tests (`make test`): parseo de pw-link/amixer, preamp, calibración.
-- Repo git inicializado (`main`), **sin commits todavía**.
+- Tests (`make test`): parseo de pw-link/amixer, preamp, calibración,
+  snapshot de la ventana y perfiles.
+- Repo público: https://github.com/wh01s17/evo8-linux
+- Preamps guardados: la EVO vuelve a -8 dB tras un corte de energía;
+  `evoctl apply` los restaura.
+- **Ventana del mezclador** (`evo8-mixer`, PySide6 + QML en
+  `src/evo8/gui/`): pestaña CONSOLA (ENTRADAS con PRE/fader/MONITOR,
+  COMPARTIDO con OÍR/SINC, APPS con compartir/mute, MEZCLA con MONITOR, SALIDA
+  por pares, PERFILES) y pestaña EVO 8 (loop-back y mezcla interna 10×4 con
+  cambios en espera y "Aplicar a la EVO"). `evo8-mixer --evo` abre en la
+  pestaña de hardware. App id Wayland: `evo8-mixer`.
 
 ### En los dotfiles (`~/dotfiles`, sin commitear)
 
@@ -173,16 +202,19 @@ En `shell.json` hay un cambio ajeno del usuario: no commitearlo.
    ("entradas 1-2 a los audífonos", "sin monitoreo directo"), loop-back por
    nombre, y persistir/restaurar la configuración de hardware al conectar la
    EVO (regla udev o servicio de usuario).
-4. **Ventana del mezclador en PySide6 + QML** (`src/evo8/gui/`), portando el
-   diseño del plugin Quickshell (consola horizontal: ENTRADAS, COMPARTIDO,
-   APPS, SALE A LA LLAMADA, SALIDA, PERFILES; PRE/fader/SINC/MONITOR/󰑐).
-   Backend: objetos Python expuestos a QML que llaman a la librería. Medidores:
-   leer picos con `pw-record` en un hilo o similar. Sección nueva: mezcla
-   interna de la EVO y loop-back (con aviso: "corta el audio un instante").
-5. **Migrar los dotfiles**: el panel y la barra llaman a `evoctl` en lugar de los
-   scripts; borrar los scripts y el plugin viejos; `make install` en vez del
-   stow de la config de PipeWire (hoy `~/.config/pipewire/pipewire.conf.d/20-mezcla.conf`
-   es symlink a los dotfiles).
+4. **Ventana**: hecha. Pendiente: botón Calibrar en la tira COMP (corre
+   `calibrate.run` en el worker y muestra el resultado), atajos de teclado,
+   tema leído desde el shell wh01s17 si existe, y presets para la mezcla
+   interna ("entradas a audífonos", "sin monitoreo directo").
+5. **Migrar los dotfiles**: el panel de audio de la barra debe llamar a
+   `evo8-mixer` ("Abrir mezclador") y a `evoctl monitor follow` / `evoctl apply`
+   en lugar de los scripts `wh01s17-audio-*`; borrar esos scripts, el plugin
+   `wh01s17.mixer`, su entrada en `shell.json`, `tests/mixer-*.js` y la regla
+   de Hyprland del título "Mezclador" de Quickshell; `git rm` de
+   `desktop/.config/pipewire/pipewire.conf.d/20-mezcla.conf` (ya no se usa).
+   Ya hecho: `make install` enlaza la config de PipeWire desde este repo
+   (desplegando el directorio que stow tenía plegado) y la regla de Hyprland
+   `class ^evo8-mixer$` (flotante, 1640×640) está en los dotfiles.
 6. **Ruta sin cortes (opcional, a futuro)**: que `snd-usb-audio` exponga el
    Mixer Unit 60 como controles ALSA. Los descriptores son válidos; averiguar
    por qué el kernel no crea los controles (recargar el módulo con

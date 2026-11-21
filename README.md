@@ -11,8 +11,8 @@ Control, obtenido por ingeniería inversa de la app oficial
 ([`docs/protocolo-usb.md`](docs/protocolo-usb.md)), y suma herramientas para
 PipeWire.
 
-> Estado: en desarrollo. El CLI funciona; la ventana del mezclador (PySide6)
-> está en camino. Ver [`plan.md`](plan.md).
+> Estado: en desarrollo. Funcionan el CLI `evoctl` y la ventana `evo8-mixer`.
+> Ver [`plan.md`](plan.md).
 
 ## Qué hace
 
@@ -41,13 +41,13 @@ PipeWire.
 
 ## Instalación
 
-Requisitos: PipeWire + WirePlumber, `pactl`, `amixer`, Python ≥ 3.11 y, para el
-control por USB, `python-pyusb`.
+Requisitos: PipeWire + WirePlumber, `pactl`, `amixer`, Python ≥ 3.11,
+`python-pyusb` para el control por USB y `pyside6` para la ventana.
 
 ```sh
 git clone https://github.com/wh01s17/evo8-linux
 cd evo8-linux
-make install      # evoctl en ~/.local/bin y la config de PipeWire en ~/.config
+make install      # evoctl y evo8-mixer en ~/.local/bin, la config de PipeWire en ~/.config
 sudo make udev    # permite al usuario hablar con la EVO por USB sin root
 systemctl --user restart pipewire pipewire-pulse wireplumber
 ```
@@ -57,6 +57,20 @@ La EVO 8 tiene que estar en el perfil **Pro Audio**
 **Mezcla** como micrófono y desactiva la cancelación de ruido.
 
 ## Uso
+
+### Ventana
+
+`evo8-mixer` abre el mezclador. Tiene dos pestañas:
+
+- **CONSOLA**: una tira por canal (entradas, Compartido, apps, la Mezcla y la
+  salida) con preamp, fader, medidores, compartir, silencio, sincronía, monitor
+  y 󰑐 para volver al valor estándar. Al final, los perfiles de cada tarjeta.
+- **EVO 8**: el loop-back y la mezcla de monitoreo interna. Los cambios quedan
+  en espera hasta que pulsas *Aplicar a la EVO*.
+
+`evo8-mixer --evo` abre directo en la pestaña EVO 8.
+
+### CLI
 
 ```sh
 # Mezcla (micrófono virtual)
