@@ -16,6 +16,7 @@ depends=(
   'alsa-utils'      # amixer
   'python-pyusb'    # hardware control over USB
   'pyside6'         # mixer window
+  'qt6-declarative' # QtQuick modules the window loads
   'ttf-jetbrains-mono-nerd'
 )
 makedepends=('git' 'python-build' 'python-installer' 'python-setuptools' 'python-wheel')
