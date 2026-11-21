@@ -95,6 +95,10 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("output", type=int)
     s.add_argument("db")
 
+    st = sub.add_parser("setup", help="instalar la config de PipeWire, el servicio y el menú en tu usuario (tras pip/pipx)")
+    st.add_argument("--remove", action="store_true", help="quitar lo que instaló setup")
+    st.add_argument("--dry-run", action="store_true", help="mostrar qué haría sin tocar nada")
+
     c = sub.add_parser("calibrate", help="medir la sincronía tocando sobre un click")
     c.add_argument("--apply", action="store_true", help="aplicar el valor medido")
     c.add_argument("--recording", help="analizar una grabación de 4 canales existente")
@@ -112,6 +116,9 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _dispatch(a) -> int:
+    if a.cmd == "setup":
+        from . import user_setup
+        return user_setup.run(remove_files=a.remove, dry_run=a.dry_run)
     if a.cmd == "mix":
         if a.action == "get":
             _json(mix.gains())
