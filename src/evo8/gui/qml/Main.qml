@@ -93,12 +93,21 @@ ApplicationWindow {
             elide: Text.ElideRight
         }
 
-        StackLayout {
+        // Give both scroll views the available space directly. Their content
+        // sizes depend on that space and must stay out of layout negotiation.
+        Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            currentIndex: window.page
-            ConsolePage {}
-            HardwarePage {}
+
+            ConsolePage {
+                anchors.fill: parent
+                visible: window.page === 0
+            }
+
+            HardwarePage {
+                anchors.fill: parent
+                visible: window.page === 1
+            }
         }
     }
 }
