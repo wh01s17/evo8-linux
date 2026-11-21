@@ -6,7 +6,7 @@ import wave
 from pathlib import Path
 from unittest import mock
 
-from evo8 import alsa, calibrate, pw
+from evo8 import alsa, calibrate, pw, state
 
 PW_LINK_L = """\
 Mezcla:capture_MONO
@@ -46,6 +46,15 @@ class PwParsing(unittest.TestCase):
 
 
 class Preamp(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        patcher = mock.patch.object(state, "STATE", Path(self.tmp.name) / "state.json")
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.addCleanup(self.tmp.cleanup)
+        mock.patch.object(state, "LEGACY", Path(self.tmp.name) / "none.json").start()
+        self.addCleanup(mock.patch.stopall)
+
     def test_get_in_db(self):
         with mock.patch.object(pw, "run", return_value=AMIXER_PREAMP):
             self.assertEqual(alsa.preamp(), {"min": -8.0, "max": 50.0, "step": 0.5,
@@ -63,6 +72,7 @@ class Preamp(unittest.TestCase):
             alsa.set_preamp(1, 99)       # clamped to +50 dB -> raw 116
         self.assertEqual(calls[1][-1], "9,57,0,0")
         self.assertEqual(calls[3][-1], "116,65,0,0")
+        self.assertEqual(state.load()["preamp"], {"2": 20.5, "1": 50.0})
         with mock.patch.object(pw, "run", return_value=AMIXER_PREAMP):
             with self.assertRaises(alsa.AlsaError):
                 alsa.set_preamp(5, 0)

@@ -1,7 +1,9 @@
 """Controls the kernel driver (snd-usb-audio) already exposes for the EVO 8.
 
 "Mic Playback Volume" is the analog preamp gain per input (the same one the
-interface's knob turns), raw 0..116 = -8..+50 dB in 0.5 dB steps.
+interface's knob turns), raw 0..116 = -8..+50 dB in 0.5 dB steps. The EVO does
+not keep these across a power cycle (it comes back at -8 dB), so every change
+is saved and `restore_preamp()` puts them back.
 """
 
 from __future__ import annotations
@@ -9,7 +11,7 @@ from __future__ import annotations
 import os
 import re
 
-from . import pw
+from . import pw, state
 
 CARD = os.environ.get("EVO8_ALSA_CARD", "EVO8")
 PREAMP_CONTROL = "Mic Playback Volume"
@@ -52,3 +54,24 @@ def set_preamp(n: int, db: float) -> None:
     values = list(c["values"])
     values[n - 1] = raw
     pw.run("amixer", "-c", CARD, "cset", f"name={PREAMP_CONTROL}", ",".join(map(str, values)), check=True)
+    applied = c["db_min"] + (raw - c["raw_min"]) * (c["db_max"] - c["db_min"]) / (c["raw_max"] - c["raw_min"])
+    saved = state.load().get("preamp") or {}
+    saved[str(n)] = round(applied, 2)
+    state.save("preamp", saved)
+
+
+def restore_preamp() -> None:
+    saved = state.load().get("preamp") or {}
+    try:
+        c = _control(PREAMP_CONTROL)
+    except AlsaError:
+        return
+    values = list(c["values"])
+    for key, db in saved.items():
+        n = int(key)
+        if 1 <= n <= len(values) and isinstance(db, (int, float)):
+            db = min(max(db, c["db_min"]), c["db_max"])
+            values[n - 1] = round(c["raw_min"] + (db - c["db_min"]) / (c["db_max"] - c["db_min"])
+                                  * (c["raw_max"] - c["raw_min"]))
+    if values != c["values"]:
+        pw.run("amixer", "-c", CARD, "cset", f"name={PREAMP_CONTROL}", ",".join(map(str, values)))

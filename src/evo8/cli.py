@@ -41,7 +41,7 @@ def build_parser() -> argparse.ArgumentParser:
     l = sub.add_parser("listen", help="nivel de escucha de Compartido")
     l.add_subparsers(dest="action", required=True).add_parser("save", help="guardar el nivel actual")
 
-    sub.add_parser("apply", help="restaurar ganancias, retardo y escucha guardados")
+    sub.add_parser("apply", help="restaurar lo guardado: ganancias, retardo, escucha y preamps")
 
     mo = sub.add_parser("monitor", help="escuchar la Mezcla o entradas sueltas por la salida")
     mos = mo.add_subparsers(dest="action", required=True)
@@ -117,6 +117,7 @@ def _dispatch(a) -> int:
         mix.save_listen_level()
     elif a.cmd == "apply":
         mix.apply()
+        alsa.restore_preamp()
     elif a.cmd == "monitor":
         if a.action == "status":
             print(monitor.status())
