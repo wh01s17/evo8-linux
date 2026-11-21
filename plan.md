@@ -69,11 +69,10 @@ un cliente delgado.
                 │             meters.py (pw-record --raw), qml/             │
                 │ state.py    estado persistente (~/.local/state/evo8)      │
                 └───────────────────────────────────────────────────────────┘
- config/pipewire/  grafo de la Mezcla (filter-chain + loopbacks)
- udev/             acceso USB sin root (TAG+="uaccess")
+ src/evo8/data/    config de PipeWire, udev, servicio, .desktop, ícono
 ```
 
-### 3.1 Grafo de audio (config/pipewire/pipewire.conf.d/20-mezcla.conf)
+### 3.1 Grafo de audio (src/evo8/data/pipewire/pipewire.conf.d/20-mezcla.conf)
 
 ```
 EVO capture AUX0/AUX1 ─► mezcla.entradas (loopback) ─► mezcla.suma FL/FR
@@ -201,7 +200,7 @@ MonitorController del EVO 16 (no aplica al EVO 8).
   `EVO8_MIXER_INSTANCE=<nombre>` abre una instancia aparte (pruebas).
 - **Logo** (aprobado por el usuario, opción B de tres): un 8 en píxeles con los
   colores de un medidor (rojo, ámbar, verde). Fuente única:
-  `src/evo8/gui/evo8-mixer.svg` (va en el paquete Python; `make install` y el
+  `src/evo8/data/evo8-mixer.svg` (va en el paquete Python; `make install` y el
   PKGBUILD lo copian a `hicolor/scalable/apps`; `.desktop` usa
   `Icon=evo8-mixer`). Necesita `qt6-svg`, que `pyside6` no arrastra.
 
@@ -261,8 +260,21 @@ sudo make udev                     # acceso USB (ya instalado en la máquina del
 
 - Paquete Arch: `packaging/arch/PKGBUILD` (`evo8-linux-git`, compila desde
   GitHub; `makepkg -si`). El servicio instalado usa `/usr/bin/evoctl`.
-- CI (`.github/workflows/ci.yml`, contenedor `archlinux`): `make test` y
-  `makepkg` del commit exacto + `namcap` + instalación y prueba de humo.
+- CI (`.github/workflows/ci.yml`): tests en contenedor `archlinux`;
+  `makepkg` del commit exacto + `namcap` + instalación y prueba de humo; y el
+  wheel en Ubuntu (Python 3.11 y 3.13): `twine check`, instalación en un venv
+  con `[gui,usb]`, tests contra el paquete instalado y `evoctl setup` en un
+  home vacío.
+- Archivos del sistema dentro del paquete (`src/evo8/data/`), para que pip los
+  lleve. `evoctl setup` (`user_setup.py`) los copia al usuario (config de
+  PipeWire, servicio con la ruta absoluta de `evoctl`, `.desktop`, ícono),
+  imprime el `sudo` de la regla udev y no reinicia PipeWire. No pisa una
+  config que ya instala el sistema (`/usr/share/pipewire`) ni los enlaces de
+  `make install`. `evoctl setup --remove` deshace.
+- **Publicar en PyPI**: subir `evo8.__version__`, commit, `git tag vX.Y.Z` y
+  push del tag → `.github/workflows/release.yml` (trusted publishing,
+  entorno `pypi`). El tag debe coincidir con la versión. Una versión
+  publicada no se puede reemplazar.
 
 ### Reglas de seguridad con el hardware
 

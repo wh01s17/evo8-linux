@@ -1,4 +1,4 @@
-<p align="center"><img src="src/evo8/gui/evo8-mixer.svg" width="112" alt="Logo de evo8-linux: un 8 en píxeles con los colores de un medidor de nivel"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/wh01s17/evo8-linux/main/src/evo8/data/evo8-mixer.svg" width="112" alt="Logo de evo8-linux: un 8 en píxeles con los colores de un medidor de nivel"></p>
 
 # evo8-linux
 
@@ -10,11 +10,11 @@ funciona como interfaz de audio estándar (UAC2), pero el kernel no expone su
 mezcla de monitoreo interna ni el ruteo del loop-back. Este proyecto los
 recupera hablando con la interfaz por USB con el mismo protocolo que usa EVO
 Control, obtenido por ingeniería inversa de la app oficial
-([`docs/protocolo-usb.md`](docs/protocolo-usb.md)), y suma herramientas para
+([`docs/protocolo-usb.md`](https://github.com/wh01s17/evo8-linux/blob/main/docs/protocolo-usb.md)), y suma herramientas para
 PipeWire.
 
 > Estado: en desarrollo. Funcionan el CLI `evoctl` y la ventana `evo8-mixer`.
-> Ver [`plan.md`](plan.md).
+> Ver [`plan.md`](https://github.com/wh01s17/evo8-linux/blob/main/plan.md).
 
 ## Qué hace
 
@@ -62,6 +62,21 @@ Instala `evoctl` y `evo8-mixer` en `/usr/bin`, la config de PipeWire en
 `/usr/share/pipewire`, la regla udev y el servicio que restaura los ajustes al
 conectar la EVO (desconéctala y vuelve a conectarla una vez). Arrastra las
 dependencias, incluida la fuente *JetBrainsMono Nerd Font* de los íconos.
+
+### Otras distribuciones (pip / pipx)
+
+```sh
+pipx install "evo8-linux[gui,usb]"
+evoctl setup      # config de PipeWire, servicio y menú en tu usuario; dice qué falta
+```
+
+pip solo instala Python: `evoctl setup` copia a tu carpeta de usuario la config
+de PipeWire, el servicio que restaura los ajustes y la entrada del menú, y te
+da el comando `sudo` exacto para la regla udev (control por USB sin root).
+También avisa si faltan PipeWire, WirePlumber, `pactl`, `amixer` o la fuente de
+los íconos. Después de actualizar con `pipx upgrade`, vuelve a correr
+`evoctl setup`. Para desinstalar: `evoctl setup --remove` y
+`pipx uninstall evo8-linux`.
 
 ### Desde el código (desarrollo)
 
@@ -145,13 +160,13 @@ Apps ─► Compartido ─┬─► mezcla.compartido ┘
                     └─► mezcla.compartido.escucha ─► salida seleccionada
 ```
 
-- [`src/evo8/`](src/evo8): librería y CLI. `pw.py` (herramientas de PipeWire),
+- [`src/evo8/`](https://github.com/wh01s17/evo8-linux/tree/main/src/evo8): librería y CLI. `pw.py` (herramientas de PipeWire),
   `mix.py`, `monitor.py`, `calibrate.py`, `apps.py`, `alsa.py`, `usb.py`
   (transporte UAC2) y `hw.py` (loop-back y mezcla interna).
-- [`config/pipewire/`](config/pipewire): el grafo de la Mezcla.
-- [`docs/protocolo-usb.md`](docs/protocolo-usb.md): topología USB de la EVO 8,
+- [`src/evo8/data/pipewire/`](https://github.com/wh01s17/evo8-linux/tree/main/src/evo8/data/pipewire): el grafo de la Mezcla.
+- [`docs/protocolo-usb.md`](https://github.com/wh01s17/evo8-linux/blob/main/docs/protocolo-usb.md): topología USB de la EVO 8,
   las peticiones que usa EVO Control y lo verificado en el dispositivo.
-- [`plan.md`](plan.md): arquitectura, estado y próximos pasos.
+- [`plan.md`](https://github.com/wh01s17/evo8-linux/blob/main/plan.md): arquitectura, estado y próximos pasos.
 
 ## Advertencia
 
