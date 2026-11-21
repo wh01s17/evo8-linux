@@ -8,6 +8,11 @@ Cómo publicar una versión: [`PUBLISH.md`](https://github.com/wh01s17/evo8-linu
 
 ## [Sin publicar]
 
+### Documentación
+
+- README reorganizado, con capturas de la ventana y un diagrama de cómo viaja
+  el audio y quién controla cada parte.
+
 ## [0.1.0] - 2026-11-21
 
 Primera versión publicada.
