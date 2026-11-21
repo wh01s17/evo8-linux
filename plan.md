@@ -263,10 +263,20 @@ copia de `20-mezcla.conf`. Hyprland: regla `class ^evo8-mixer$` flotante
 
 ```
 make test                          # tests sin hardware
-PYTHONPATH=src python3 -m evo8.cli <comando>   # sin instalar
-make install                       # evoctl en ~/.local/bin (apunta a este checkout)
-sudo make udev                     # acceso USB (ya instalado en la máquina del usuario)
+PYTHONPATH=src python3 -m evo8.cli <comando>   # el CLI del checkout, sin instalar
+EVO8_MIXER_INSTANCE=dev PYTHONPATH=src python3 -m evo8.gui.app   # la ventana del checkout, aparte
 ```
+
+- **La máquina del usuario usa la versión publicada** (desde 2026-11-21):
+  `pipx install "evo8-linux[gui,usb]"` + `evoctl setup`, como cualquier
+  usuario. Los comandos están en `~/.local/bin` (pipx) y la barra de los
+  dotfiles los llama por nombre. **No correr `make install` ahí**: sus
+  lanzadores reemplazarían a los de pipx. Para probar cambios, usar el
+  checkout sin instalar (arriba). Tras publicar una versión:
+  `pipx upgrade evo8-linux && evoctl setup`. La regla udev
+  (`/etc/udev/rules.d`) ya está instalada.
+- `make install` / `sudo make udev` siguen sirviendo para desarrollar en otra
+  máquina (enlaces al checkout).
 
 - Paquete Arch: `packaging/arch/PKGBUILD` (`evo8-linux-git`, compila desde
   GitHub; `makepkg -si`). El servicio instalado usa `/usr/bin/evoctl`.

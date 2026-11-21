@@ -80,6 +80,7 @@ git push origin vX.Y.Z
       `pipx install --force "evo8-linux[gui,usb]==X.Y.Z"`, luego
       `evoctl --version` y `evoctl setup --dry-run`.
 - [ ] ACERCA DE muestra la versión nueva.
+- [ ] Tu PC: `pipx upgrade evo8-linux && evoctl setup`, y reabre la ventana.
 - [ ] **AUR** (si el paquete está publicado ahí): `evo8-linux-git` toma la
       versión de git solo; sube `pkgrel` solo si cambió el PKGBUILD, regenera
       `.SRCINFO` (`makepkg --printsrcinfo > .SRCINFO`) y haz push al repo del
