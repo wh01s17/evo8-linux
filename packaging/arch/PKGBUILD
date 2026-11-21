@@ -17,6 +17,7 @@ depends=(
   'python-pyusb'    # hardware control over USB
   'pyside6'         # mixer window
   'qt6-declarative' # QtQuick modules the window loads
+  'qt6-svg'         # the SVG icon
   'ttf-jetbrains-mono-nerd'
 )
 makedepends=('git' 'python-build' 'python-installer' 'python-setuptools' 'python-wheel')
@@ -56,6 +57,7 @@ package() {
   install -Dm644 data/evo8-restore.service "$pkgdir/usr/lib/systemd/user/evo8-restore.service"
   sed -i 's|%h/.local/bin/evoctl|/usr/bin/evoctl|' "$pkgdir/usr/lib/systemd/user/evo8-restore.service"
   install -Dm644 data/evo8-mixer.desktop "$pkgdir/usr/share/applications/evo8-mixer.desktop"
+  install -Dm644 src/evo8/gui/evo8-mixer.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/evo8-mixer.svg"
 
   install -Dm644 README.md "$pkgdir/usr/share/doc/$_name/README.md"
   install -Dm644 docs/protocolo-usb.md "$pkgdir/usr/share/doc/$_name/protocolo-usb.md"
