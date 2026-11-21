@@ -44,16 +44,39 @@ PipeWire.
 
 ## Instalación
 
+Solo para la **Audient EVO 8** (no la EVO 4 ni la EVO 16). El control por USB
+se probó con el firmware 1.4c.
+
+### Arch Linux (paquete)
+
+```sh
+git clone https://github.com/wh01s17/evo8-linux
+cd evo8-linux/packaging/arch
+makepkg -si
+systemctl --user restart pipewire pipewire-pulse wireplumber
+```
+
+Instala `evoctl` y `evo8-mixer` en `/usr/bin`, la config de PipeWire en
+`/usr/share/pipewire`, la regla udev y el servicio que restaura los ajustes al
+conectar la EVO (desconéctala y vuelve a conectarla una vez). Arrastra las
+dependencias, incluida la fuente *JetBrainsMono Nerd Font* de los íconos.
+
+### Desde el código (desarrollo)
+
 Requisitos: PipeWire + WirePlumber, `pactl`, `amixer`, Python ≥ 3.11,
-`python-pyusb` para el control por USB y `pyside6` para la ventana.
+`python-pyusb` para el control por USB, `pyside6` para la ventana y
+*JetBrainsMono Nerd Font* (`ttf-jetbrains-mono-nerd`) para los íconos.
 
 ```sh
 git clone https://github.com/wh01s17/evo8-linux
 cd evo8-linux
-make install      # evoctl y evo8-mixer en ~/.local/bin, la config de PipeWire en ~/.config
+make install      # evoctl y evo8-mixer en ~/.local/bin (apuntan a esta carpeta), la config de PipeWire en ~/.config
 sudo make udev    # permite al usuario hablar con la EVO por USB sin root
 systemctl --user restart pipewire pipewire-pulse wireplumber
 ```
+
+No mezcles las dos: con el paquete instalado, `make uninstall` quita los
+lanzadores de `~/.local/bin`, que si no tendrían prioridad sobre los de `/usr/bin`.
 
 La EVO 8 tiene que estar en el perfil **Pro Audio**
 (`evoctl profiles set alsa_card.usb-Audient_EVO8-00 pro-audio`). En Meet, elige

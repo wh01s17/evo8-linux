@@ -242,6 +242,11 @@ make install                       # evoctl en ~/.local/bin (apunta a este check
 sudo make udev                     # acceso USB (ya instalado en la máquina del usuario)
 ```
 
+- Paquete Arch: `packaging/arch/PKGBUILD` (`evo8-linux-git`, compila desde
+  GitHub; `makepkg -si`). El servicio instalado usa `/usr/bin/evoctl`.
+- CI (`.github/workflows/ci.yml`, contenedor `archlinux`): `make test` y
+  `makepkg` del commit exacto + `namcap` + instalación y prueba de humo.
+
 ### Reglas de seguridad con el hardware
 
 - Antes de escribir algo nuevo: leer (GET) y anotar el valor original.
