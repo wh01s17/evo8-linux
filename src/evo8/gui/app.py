@@ -33,12 +33,17 @@ def main(argv: list[str] | None = None) -> int:
     # the front and exits.
     # EVO8_MIXER_INSTANCE gives a separate instance (tests, a second window).
     name = os.environ.get("EVO8_MIXER_INSTANCE") or f"evo8-mixer-{os.getuid()}"
+    # The kernel accepts the connection even when the running window is hung,
+    # so only a reply proves it is alive; otherwise take over the name.
     probe = QLocalSocket()
     probe.connectToServer(name)
     if probe.waitForConnected(300):
         probe.write(b"raise\n")
         probe.waitForBytesWritten(300)
-        return 0
+        if probe.waitForReadyRead(1000) and probe.readAll().data().startswith(b"ok"):
+            return 0
+        print("la ventana anterior no responde; abriendo otra", file=sys.stderr)
+    probe.abort()
     QLocalServer.removeServer(name)
     server = QLocalServer()
     server.listen(name)
@@ -55,14 +60,25 @@ def main(argv: list[str] | None = None) -> int:
     window = engine.rootObjects()[0]
 
     def raise_window():
-        sock = server.nextPendingConnection()
-        if sock:
-            sock.close()
         window.show()
         window.raise_()
         window.requestActivate()
 
-    server.newConnection.connect(raise_window)
+    # Read the request before answering: closing a Unix socket with unread
+    # data resets the peer, which would lose the reply. The caller closes.
+    def on_connection():
+        while (sock := server.nextPendingConnection()) is not None:
+            def answer(sock=sock):
+                sock.readAll()
+                sock.write(b"ok\n")
+                sock.flush()
+                raise_window()
+            sock.readyRead.connect(answer)
+            sock.disconnected.connect(sock.deleteLater)
+            if sock.bytesAvailable():
+                answer()
+
+    server.newConnection.connect(on_connection)
     code = app.exec()
     backend.shutdown()
     return code
