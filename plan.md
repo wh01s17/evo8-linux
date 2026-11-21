@@ -175,16 +175,16 @@ MonitorController del EVO 16 (no aplica al EVO 8).
   cambios en espera y "Aplicar a la EVO"). `evo8-mixer --evo` abre en la
   pestaña de hardware. App id Wayland: `evo8-mixer`.
 
-### En los dotfiles (`~/dotfiles`, sin commitear)
+### En los dotfiles (`~/dotfiles`)
 
-El shell aún usa los scripts viejos en `platform/.local/share/wh01s17/bin/`
-(`wh01s17-audio-mix-gain`, `-mix-monitor`, `-mix-calibrate`, `-preamp-gain`,
-`-stream-share`, `-card-profiles`) y el plugin Quickshell
-`desktop/.config/wh01s17/plugins/wh01s17.mixer/` (ventana del mezclador actual,
-con perfiles, MONITOR por entrada, SINC). El panel de audio de la barra quedó
-reducido: listas de dispositivos + botón "Abrir mezclador"; llama a
-`wh01s17-audio-mix-monitor follow` y `wh01s17-audio-mix-gain apply`.
-En `shell.json` hay un cambio ajeno del usuario: no commitearlo.
+Migración hecha (commits 9e3a02b, 942f1bf, 2dd4ed4): el panel de audio de la
+barra muestra "Abrir mezclador" solo si `evo8-mixer` está instalado, lo lanza
+(una sola ventana; la enfoca con `hyprctl dispatch 'hl.dsp.focus(...)'`) y
+llama a `evoctl apply; evoctl monitor follow` cuando reaparece `mezcla.suma`
+y a `evoctl monitor follow` cuando cambia la salida. Se borraron los scripts
+`wh01s17-audio-*` de la Mezcla, el plugin Quickshell `wh01s17.mixer` y la
+copia de `20-mezcla.conf`. Hyprland: regla `class ^evo8-mixer$` flotante
+1640×640. En `shell.json` quedan cambios ajenos del usuario: no commitearlos.
 
 ---
 
@@ -206,15 +206,7 @@ En `shell.json` hay un cambio ajeno del usuario: no commitearlo.
    `calibrate.run` en el worker y muestra el resultado), atajos de teclado,
    tema leído desde el shell wh01s17 si existe, y presets para la mezcla
    interna ("entradas a audífonos", "sin monitoreo directo").
-5. **Migrar los dotfiles**: el panel de audio de la barra debe llamar a
-   `evo8-mixer` ("Abrir mezclador") y a `evoctl monitor follow` / `evoctl apply`
-   en lugar de los scripts `wh01s17-audio-*`; borrar esos scripts, el plugin
-   `wh01s17.mixer`, su entrada en `shell.json`, `tests/mixer-*.js` y la regla
-   de Hyprland del título "Mezclador" de Quickshell; `git rm` de
-   `desktop/.config/pipewire/pipewire.conf.d/20-mezcla.conf` (ya no se usa).
-   Ya hecho: `make install` enlaza la config de PipeWire desde este repo
-   (desplegando el directorio que stow tenía plegado) y la regla de Hyprland
-   `class ^evo8-mixer$` (flotante, 1640×640) está en los dotfiles.
+5. **Migrar los dotfiles**: hecho (ver §4).
 6. **Ruta sin cortes (opcional, a futuro)**: que `snd-usb-audio` exponga el
    Mixer Unit 60 como controles ALSA. Los descriptores son válidos; averiguar
    por qué el kernel no crea los controles (recargar el módulo con
