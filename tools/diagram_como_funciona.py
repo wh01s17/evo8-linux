@@ -38,7 +38,7 @@ add(f'<rect width="{W}" height="{H}" rx="14" fill="{BG}"/>')
 # ---------- audio ----------
 add(f'<rect x="16" y="16" width="{W-32}" height="352" rx="10" fill="{PANEL}" stroke="{EDGE}"/>')
 text(32, 42, "AUDIO", 12, GREEN, "bold")
-text(92, 42, "lo que entra a la llamada y lo que escuchas (PipeWire)", 12, DIM)
+text(92, 42, "lo que sale por el micrófono virtual y lo que escuchas (PipeWire)", 12, DIM)
 
 box(36, 70, 190, 62, "EVO 8 · IN 1-2", ("entradas de la interfaz",))
 box(36, 226, 190, 62, "Apps", ("YouTube, metrónomo,", "backing tracks"))
@@ -55,12 +55,12 @@ for i, (k, v) in enumerate((("SINC", "retrasa Compartido"), ("FADER", "ganancia 
 box(766, 70, 180, 62, "Mezcla", ("micrófono virtual",), accent=GREEN)
 box(766, 226, 180, 62, "Salida", ("la seleccionada:", "audífonos o parlantes"))
 add(f'<rect x="776" y="158" width="160" height="30" rx="15" fill="{BG}" stroke="{EDGE}"/>')
-text(856, 178, "Meet · Zoom · OBS", 11.5, FG, anchor="middle")
+text(856, 178, "OBS · DAW · Meet …", 11.5, FG, anchor="middle")
 
 arrow([(226, 101), (276, 101)], GREEN)
 arrow([(466, 101), (516, 101)], GREEN)
 arrow([(226, 257), (276, 257)], GREEN)
-arrow([(466, 246), (616, 246), (616, 180)], GREEN, "a la llamada", 548, 238, anchor="middle")
+arrow([(466, 246), (616, 246), (616, 180)], GREEN, "a la Mezcla", 548, 238, anchor="middle")
 arrow([(466, 272), (766, 272)], GREEN, "lo escuchas tú", 616, 290)
 arrow([(716, 101), (766, 101)], GREEN)
 arrow([(856, 132), (856, 158)], GREEN)
@@ -68,7 +68,7 @@ arrow([(946, 112), (958, 112), (958, 248), (946, 248)], GREEN, dashed=True)
 text(952, 340, "MONITOR: te escuchas", 11, GREEN, anchor="end")
 text(952, 356, "(Mezcla o una entrada → Salida)", 11, DIM, anchor="end")
 text(36, 330, "SINC compensa la latencia: quien toca sobre la música la oye tarde,", 11.5, DIM)
-text(36, 348, "así que la música se retrasa solo hacia la llamada (evoctl calibrate).", 11.5, DIM)
+text(36, 348, "así que la música se retrasa solo hacia la Mezcla (evoctl calibrate).", 11.5, DIM)
 
 # ---------- control ----------
 y0 = 392

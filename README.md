@@ -8,14 +8,15 @@
 <img src="https://img.shields.io/badge/licencia-MIT-blue" alt="Licencia MIT">
 </p>
 
-Control del **Audient EVO 8** en Linux, más un micrófono virtual pensado para
-tocar y enseñar en videollamadas.
+Control del **Audient EVO 8** en Linux: una ventana tipo consola y un CLI
+para la interfaz y para el audio del sistema.
 
 Audient solo publica **EVO Control** para Windows y macOS. En Linux la EVO 8
 funciona como interfaz de audio estándar, pero el kernel no expone su mezcla de
 monitoreo interna ni el ruteo del loop-back. evo8-linux los recupera hablando
-con la interfaz por USB con el mismo protocolo que usa EVO Control, y suma un
-micrófono virtual para videollamadas sobre PipeWire.
+con la interfaz por USB con el mismo protocolo que usa EVO Control. Además
+incluye un mezclador para PipeWire y, si lo necesitas, un micrófono virtual que
+junta tus entradas con el audio de otras apps.
 
 ![La pestaña CONSOLA del mezclador: entradas, Compartido, la Mezcla, la salida y los perfiles de cada tarjeta](https://raw.githubusercontent.com/wh01s17/evo8-linux/main/docs/img/consola.png)
 
@@ -34,19 +35,26 @@ micrófono virtual para videollamadas sobre PipeWire.
 - **Al conectarla**: la EVO olvida esos ajustes cuando se apaga. Un servicio
   los restaura al conectarla. El phantom nunca se enciende solo.
 
-**Un micrófono virtual para videollamadas**
+**Un mezclador para el audio del sistema**
+
+- Volumen, silencio y medidores de las entradas, las apps y la salida
+  seleccionada, por canal.
+- **Monitor**: escuchar una entrada, o todo, por la salida seleccionada, con
+  latencia baja.
+- **Perfiles de tarjeta**: elegir cómo usa el sistema cada tarjeta de sonido,
+  con lo que hace cada opción.
+
+**Un micrófono virtual, si lo necesitas**
 
 - **Mezcla**: un micrófono que suma las entradas 1-2 de la EVO y una salida
-  virtual, **Compartido**. Lo que mandes a Compartido (YouTube, un metrónomo,
-  un backing track) lo escuchas tú y también entra a la llamada.
+  virtual, **Compartido**. Lo que mandes a Compartido (música, un metrónomo,
+  un backing track) lo escuchas tú y también sale por la Mezcla. Cualquier app
+  puede usarla como micrófono: OBS, un DAW, Discord o el navegador.
 - **Ganancia en vivo** por canal, y apps que se mandan a Compartido de a una.
-- **Monitor**: escucharte por la salida seleccionada, la Mezcla completa o
-  una entrada sola, con latencia baja.
 - **Sincronía**: quien toca sobre la música la oye con retraso, y su
   instrumento llega con otro. *Calibrar* mide ese desfase mientras tocas sobre
-  un click y lo compensa retrasando la música solo hacia la llamada.
-- El navegador (Meet, Zoom web) ya no baja el volumen del micrófono por su
-  cuenta.
+  un click y lo compensa retrasando la música solo hacia la Mezcla.
+- Los navegadores no pueden bajar el volumen de la Mezcla por su cuenta.
 
 ## Instalación
 
@@ -102,8 +110,9 @@ No mezcles esta instalación con el paquete: los lanzadores de
 2. Pon la EVO 8 en el perfil **Pro Audio**, desde la pestaña CONSOLA (columna
    PERFILES) o con
    `evoctl profiles set alsa_card.usb-Audient_EVO8-00 pro-audio`.
-3. En Meet o Zoom, elige **Mezcla** como micrófono y desactiva la cancelación
-   de ruido.
+3. Para usar el micrófono virtual, elige **Mezcla** como micrófono en la app.
+   Si la app tiene supresión de ruido o control automático de ganancia,
+   desactívalos: alteran la música que mandas por Compartido.
 
 ## Uso
 
@@ -160,7 +169,7 @@ de escritorio.
 
 ## Cómo funciona
 
-![Diagrama: arriba, el audio. Las entradas 1-2 de la EVO y Compartido se suman en mezcla.suma, que aplica la sincronía y las ganancias y entrega el micrófono Mezcla a la videollamada; Compartido también va a la salida para que lo escuches, y el monitor lleva la Mezcla a la salida. Abajo, el control. La ventana y evoctl usan la librería evo8, que ajusta PipeWire al instante y habla por USB con la EVO para la mezcla interna, el loop-back, los preamps, el phantom y el silencio.](https://raw.githubusercontent.com/wh01s17/evo8-linux/main/docs/img/como-funciona.svg)
+![Diagrama: arriba, el audio. Las entradas 1-2 de la EVO y Compartido se suman en mezcla.suma, que aplica la sincronía y las ganancias y entrega el micrófono virtual Mezcla a cualquier app; Compartido también va a la salida para que lo escuches, y el monitor lleva la Mezcla a la salida. Abajo, el control. La ventana y evoctl usan la librería evo8, que ajusta PipeWire al instante y habla por USB con la EVO para la mezcla interna, el loop-back, los preamps, el phantom y el silencio.](https://raw.githubusercontent.com/wh01s17/evo8-linux/main/docs/img/como-funciona.svg)
 
 El proyecto mueve dos cosas distintas:
 

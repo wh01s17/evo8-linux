@@ -4,7 +4,7 @@
 <rect width="980" height="640" rx="14" fill="#12171a"/>
 <rect x="16" y="16" width="948" height="352" rx="10" fill="#161d21" stroke="#2f3c42"/>
 <text x="32" y="42" font-size="12" fill="#84c959" font-weight="bold" text-anchor="start">AUDIO</text>
-<text x="92" y="42" font-size="12" fill="#8a978d" font-weight="normal" text-anchor="start">lo que entra a la llamada y lo que escuchas (PipeWire)</text>
+<text x="92" y="42" font-size="12" fill="#8a978d" font-weight="normal" text-anchor="start">lo que sale por el micrófono virtual y lo que escuchas (PipeWire)</text>
 <rect x="36" y="70" width="190" height="62" rx="6" fill="#1c2529" stroke="#2f3c42" stroke-width="1.5"/>
 <text x="48" y="94" font-size="14" fill="#d6dfd2" font-weight="bold" text-anchor="start">EVO 8 · IN 1-2</text>
 <text x="48" y="112" font-size="11.5" fill="#8a978d" font-weight="normal" text-anchor="start">entradas de la interfaz</text>
@@ -36,12 +36,12 @@
 <text x="778" y="268" font-size="11.5" fill="#8a978d" font-weight="normal" text-anchor="start">la seleccionada:</text>
 <text x="778" y="286" font-size="11.5" fill="#8a978d" font-weight="normal" text-anchor="start">audífonos o parlantes</text>
 <rect x="776" y="158" width="160" height="30" rx="15" fill="#12171a" stroke="#2f3c42"/>
-<text x="856" y="178" font-size="11.5" fill="#d6dfd2" font-weight="normal" text-anchor="middle">Meet · Zoom · OBS</text>
+<text x="856" y="178" font-size="11.5" fill="#d6dfd2" font-weight="normal" text-anchor="middle">OBS · DAW · Meet …</text>
 <path d="M 226 101 L 276 101" fill="none" stroke="#84c959" stroke-width="2" marker-end="url(#g)"/>
 <path d="M 466 101 L 516 101" fill="none" stroke="#84c959" stroke-width="2" marker-end="url(#g)"/>
 <path d="M 226 257 L 276 257" fill="none" stroke="#84c959" stroke-width="2" marker-end="url(#g)"/>
 <path d="M 466 246 L 616 246 L 616 180" fill="none" stroke="#84c959" stroke-width="2" marker-end="url(#g)"/>
-<text x="548" y="238" font-size="11" fill="#84c959" font-weight="normal" text-anchor="middle">a la llamada</text>
+<text x="548" y="238" font-size="11" fill="#84c959" font-weight="normal" text-anchor="middle">a la Mezcla</text>
 <path d="M 466 272 L 766 272" fill="none" stroke="#84c959" stroke-width="2" marker-end="url(#g)"/>
 <text x="616" y="290" font-size="11" fill="#84c959" font-weight="normal" text-anchor="middle">lo escuchas tú</text>
 <path d="M 716 101 L 766 101" fill="none" stroke="#84c959" stroke-width="2" marker-end="url(#g)"/>
@@ -50,7 +50,7 @@
 <text x="952" y="340" font-size="11" fill="#84c959" font-weight="normal" text-anchor="end">MONITOR: te escuchas</text>
 <text x="952" y="356" font-size="11" fill="#8a978d" font-weight="normal" text-anchor="end">(Mezcla o una entrada → Salida)</text>
 <text x="36" y="330" font-size="11.5" fill="#8a978d" font-weight="normal" text-anchor="start">SINC compensa la latencia: quien toca sobre la música la oye tarde,</text>
-<text x="36" y="348" font-size="11.5" fill="#8a978d" font-weight="normal" text-anchor="start">así que la música se retrasa solo hacia la llamada (evoctl calibrate).</text>
+<text x="36" y="348" font-size="11.5" fill="#8a978d" font-weight="normal" text-anchor="start">así que la música se retrasa solo hacia la Mezcla (evoctl calibrate).</text>
 <rect x="16" y="392" width="948" height="232" rx="10" fill="#161d21" stroke="#2f3c42"/>
 <text x="32" y="418" font-size="12" fill="#e8b53f" font-weight="bold" text-anchor="start">CONTROL</text>
 <text x="110" y="418" font-size="12" fill="#8a978d" font-weight="normal" text-anchor="start">quién mueve cada cosa</text>

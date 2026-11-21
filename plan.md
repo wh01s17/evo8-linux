@@ -44,6 +44,11 @@ un cliente delgado.
 - Las entradas se rotulan **solo por número** ("Entrada 1", "IN 1"), nunca
   "Guitarra"/"Micro": los puertos pueden cambiar.
 - El monitor siempre suena por la **salida seleccionada** (la por defecto).
+- **Uso general.** evo8-linux es el control de la EVO 8 y un mezclador para
+  Linux; el micrófono virtual (la Mezcla) es una opción más, para cualquier
+  app. No atar textos de la app ni de la documentación a un uso concreto
+  («llamada», «clase», Meet, «calidad de teléfono»…). Los ejemplos de apps van
+  juntos y variados (OBS, un DAW, Discord, el navegador).
 - Cada control de la ventana tiene un botón **󰑐 restablecer** a su valor
   estándar.
 - Los archivos Python no deben pasar de **1000 líneas** (dividir en módulos).

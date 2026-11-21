@@ -29,7 +29,7 @@ Una versión publicada en PyPI **no se puede reemplazar** ni volver a subir.
    (https://github.com/wh01s17/evo8-linux/actions).
 2. Probar en tu equipo: `make test`, abrir la ventana y recorrer las tres
    pestañas. Si cambió algo del USB, probarlo con la EVO siguiendo las reglas
-   de seguridad de `plan.md` (§6). **Nunca durante una llamada.**
+   de seguridad de `plan.md` (§6). **Nunca mientras estés usando el audio** (grabando, transmitiendo o en una llamada).
 3. **`CHANGELOG.md`**:
    - Pasa lo que está en `## [Sin publicar]` a una sección nueva
      `## [X.Y.Z] - AAAA-MM-DD`, y deja `## [Sin publicar]` vacía arriba.
