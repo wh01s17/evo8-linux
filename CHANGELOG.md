@@ -8,6 +8,12 @@ Cómo publicar una versión: [`PUBLISH.md`](https://github.com/wh01s17/evo8-linu
 
 ## [Sin publicar]
 
+### Cambiado
+
+- Los textos de la app y del paquete describen un uso general: el grupo
+  «SALE A LA LLAMADA» de CONSOLA ahora se llama «MICRÓFONO VIRTUAL», y la
+  Mezcla se presenta como un micrófono para cualquier app.
+
 ### Documentación
 
 - README reorganizado, con capturas de la ventana y un diagrama de cómo viaja

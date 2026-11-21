@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "evo8-linux"
 dynamic = ["version"]
-description = "Control del Audient EVO 8 en Linux: mezcla de monitoreo, loop-back, micrófono virtual para llamadas y mezclador."
+description = "Control del Audient EVO 8 en Linux: mezcla de monitoreo interna, loop-back, preamps, mezclador para PipeWire y micrófono virtual."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"

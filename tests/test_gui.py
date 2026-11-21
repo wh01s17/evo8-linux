@@ -84,7 +84,7 @@ class Profiles(unittest.TestCase):
         raw = [{"name": "bluez_card.AA", "description": "Parlante", "active": "a2dp-sink",
                 "profiles": [prof("headset-head-unit", "Headset", 1, 1), prof("a2dp-sink", "A2DP", 1, 0)]}]
         self.assertEqual([(p["label"], p["hint"]) for p in profiles.cards(raw)[0]["profiles"]],
-                         [("Estándar", "con micrófono, sonido de llamada"),
+                         [("Estándar", "con micrófono, menor calidad"),
                           ("Solo salida", "solo sonido, alta calidad")])
 
 

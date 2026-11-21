@@ -130,7 +130,7 @@ ScrollView {
                     title: "COMP"
                     subtitle: "música y apps"
                     topLabel: "OÍR"
-                    topTip: "Cuánto oyes Compartido (no cambia lo que sale a la llamada)"
+                    topTip: "Cuánto oyes Compartido (no cambia lo que entra a la Mezcla)"
                     topEnabled: !page.monitorOn && !!esc
                     topValue: esc ? esc.volume : 0
                     topText: page.monitorOn ? "monitor" : F.percent(topValue)
@@ -194,14 +194,14 @@ ScrollView {
 
             // ---- Mezcla master ----
             StripGroup {
-                title: "SALE A LA LLAMADA"
+                title: "MICRÓFONO VIRTUAL"
                 Strip {
                     unit: page.unit
                     faderHeight: page.faderHeight
                     readonly property var mz: page.m.mezcla
                     master: true
                     title: "MEZCLA"
-                    subtitle: "micrófono virtual"
+                    subtitle: "lo que reciben las apps"
                     faderEnabled: !!mz
                     standard: page.standardVolume
                     value: mz ? mz.volume : 0

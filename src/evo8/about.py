@@ -15,7 +15,8 @@ from . import __version__, state
 NAME = "evo8-linux"
 APP = "Mezclador EVO 8"
 DESCRIPTION = ("Control del Audient EVO 8 en Linux: mezcla de monitoreo interna, "
-               "loop-back, preamps y un micrófono virtual para videollamadas.")
+               "loop-back y preamps, un mezclador para PipeWire y un micrófono "
+               "virtual que junta tus entradas con el audio de otras apps.")
 AUTHOR = "wh01s17"
 LICENSE = "MIT"
 REPO = "https://github.com/wh01s17/evo8-linux"

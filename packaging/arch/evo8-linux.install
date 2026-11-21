@@ -7,7 +7,7 @@ post_install() {
          evoctl profiles set alsa_card.usb-Audient_EVO8-00 pro-audio
     3. Desconecta y vuelve a conectar la EVO para que tome la regla udev
        (control USB sin root y restauración de ajustes al conectarla).
-    En Meet, elige "Mezcla" como micrófono.
+    Para usar el micrófono virtual, elige "Mezcla" como micrófono en la app.
 EOF
 }
 

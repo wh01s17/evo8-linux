@@ -475,7 +475,7 @@ ScrollView {
                 spacing: 8
                 SectionTitle { text: "LOOP-BACK · LO QUE LLEGA A LA CAPTURA 5-6" }
                 Text {
-                    text: "Solo para programas que graban desde una entrada de la EVO (OBS, etc.). Si usas la Mezcla en la llamada, déjalo en PC 5-6."
+                    text: "Solo para programas que graban desde una entrada de la EVO (OBS, etc.). Si usas la Mezcla como micrófono, déjalo en PC 5-6."
                     color: Theme.dim
                     font.family: Theme.font
                     font.pixelSize: Theme.caption

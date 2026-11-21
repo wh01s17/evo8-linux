@@ -205,7 +205,7 @@ def run(remove_files: bool = False, dry_run: bool = False) -> int:
     if not udev_installed():
         steps.append("Permitir el control por USB sin root (pide tu contraseña):\n    " + udev_command())
     if pipewire_changed or mezcla_loaded() is False:
-        steps.append("Reiniciar PipeWire para cargar la Mezcla (corta el audio un momento; no lo hagas en una llamada):\n"
+        steps.append("Reiniciar PipeWire para cargar la Mezcla (corta el audio un momento: no lo hagas mientras grabas o transmites):\n"
                      "    systemctl --user restart pipewire pipewire-pulse wireplumber")
     if evo_profile_ok() is False:
         steps.append("Poner la EVO 8 en el perfil Pro Audio:\n"

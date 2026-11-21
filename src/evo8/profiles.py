@@ -45,7 +45,7 @@ def hint(profile: dict, bluetooth: bool = False, required: bool = False) -> str:
     if profile["name"] == "pro-audio":
         return "cada canal aparte" + (" · lo usa la Mezcla" if required else "")
     if profile["sinks"] and profile["sources"]:
-        return "con micrófono, sonido de llamada" if bluetooth else "entrada y salida comunes"
+        return "con micrófono, menor calidad" if bluetooth else "entrada y salida comunes"
     if profile["sinks"]:
         if bluetooth:
             return "solo sonido, alta calidad"
