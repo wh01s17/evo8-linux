@@ -14,7 +14,8 @@ Control, obtenido por ingeniería inversa de la app oficial
 PipeWire.
 
 > Estado: en desarrollo. Funcionan el CLI `evoctl` y la ventana `evo8-mixer`.
-> Ver [`plan.md`](https://github.com/wh01s17/evo8-linux/blob/main/plan.md).
+> Ver [`plan.md`](https://github.com/wh01s17/evo8-linux/blob/main/plan.md) y los
+> [cambios de cada versión](https://github.com/wh01s17/evo8-linux/blob/main/CHANGELOG.md).
 
 ## Qué hace
 
@@ -167,6 +168,8 @@ Apps ─► Compartido ─┬─► mezcla.compartido ┘
 - [`docs/protocolo-usb.md`](https://github.com/wh01s17/evo8-linux/blob/main/docs/protocolo-usb.md): topología USB de la EVO 8,
   las peticiones que usa EVO Control y lo verificado en el dispositivo.
 - [`plan.md`](https://github.com/wh01s17/evo8-linux/blob/main/plan.md): arquitectura, estado y próximos pasos.
+- [`CHANGELOG.md`](https://github.com/wh01s17/evo8-linux/blob/main/CHANGELOG.md): cambios por versión.
+- [`PUBLISH.md`](https://github.com/wh01s17/evo8-linux/blob/main/PUBLISH.md): cómo publicar una versión.
 
 ## Advertencia
 

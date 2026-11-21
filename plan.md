@@ -271,10 +271,13 @@ sudo make udev                     # acceso USB (ya instalado en la máquina del
   imprime el `sudo` de la regla udev y no reinicia PipeWire. No pisa una
   config que ya instala el sistema (`/usr/share/pipewire`) ni los enlaces de
   `make install`. `evoctl setup --remove` deshace.
-- **Publicar en PyPI**: subir `evo8.__version__`, commit, `git tag vX.Y.Z` y
-  push del tag → `.github/workflows/release.yml` (trusted publishing,
-  entorno `pypi`). El tag debe coincidir con la versión. Una versión
-  publicada no se puede reemplazar.
+- **Publicar una versión**: seguir `PUBLISH.md` (changelog, versión, tag).
+  El tag `vX.Y.Z` dispara `.github/workflows/release.yml`: PyPI (trusted
+  publishing, entorno `pypi`) y la release de GitHub con la sección de
+  `CHANGELOG.md` (`tools/release_notes.py`). Publicada: **0.1.0**
+  (2026-11-21, https://pypi.org/project/evo8-linux/).
+- Mientras se trabaja, anotar los cambios visibles en `## [Sin publicar]` de
+  `CHANGELOG.md`.
 
 ### Reglas de seguridad con el hardware
 
