@@ -48,8 +48,9 @@ ScrollView {
         id: btn
         property string text: ""
         property bool primary: false
+        property bool fill: false
         signal clicked()
-        width: label.implicitWidth + 24
+        width: fill ? parent.width : label.implicitWidth + 24
         height: label.implicitHeight + 12
         radius: Theme.radius
         opacity: enabled ? 1 : 0.4
@@ -109,22 +110,25 @@ ScrollView {
                     font.family: Theme.font
                     font.pixelSize: Theme.caption
                 }
-                Flow {
+                Column {
                     width: parent.width
                     spacing: 8
                     Button {
+                        fill: true
                         text: "Leer de la EVO"
                         enabled: !page.hw.busy
                         onClicked: mixer.hwRead()
                     }
                     Button {
-                        text: "Aplicar a la EVO"
+                        fill: true
+                        text: page.hasPending ? "Aplicar a la EVO (cambios pendientes)" : "Aplicar a la EVO"
                         primary: true
                         enabled: !page.hw.busy && page.hasPending
                         onClicked: mixer.hwApply()
                     }
                     Button {
-                        text: "Descartar"
+                        fill: true
+                        text: "Descartar cambios"
                         enabled: !page.hw.busy && page.hasPending
                         onClicked: mixer.hwDiscard()
                     }
@@ -270,78 +274,111 @@ ScrollView {
 
                 SectionTitle { text: "LO QUE OYES DIRECTO EN LOS AUDÍFONOS · SIN PASAR POR EL PC, SIN LATENCIA" }
 
-                Flow {
-                    id: controls
-                    width: parent.width
-                    spacing: 18
-                    // Which headphone mix is being edited.
-                    Row {
-                        spacing: 8
-                        Repeater {
-                            model: ["AUDÍFONOS 1 · salidas 1-2", "AUDÍFONOS 2 · salidas 3-4"]
-                            Rectangle {
-                                required property var modelData
-                                required property int index
-                                readonly property bool current: hpMix.pair === index
-                                width: tabText.implicitWidth + 28
-                                height: tabText.implicitHeight + 14
-                                radius: Theme.radius
-                                color: current ? Theme.alpha(Theme.foreground, 0.12)
-                                     : tabMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.06) : "transparent"
-                                border.width: 1
-                                border.color: current ? Theme.accent : Theme.alpha(Theme.foreground, 0.25)
-                                Text {
-                                    id: tabText
-                                    anchors.centerIn: parent
-                                    text: modelData
-                                    color: Theme.foreground
-                                    font.family: Theme.font
-                                    font.pixelSize: Theme.caption
-                                    font.bold: parent.current
-                                    font.letterSpacing: 1.1
-                                }
-                                MouseArea {
-                                    id: tabMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: hpMix.pair = index
+                // Which headphone mix the strips below edit: one joined control.
+                Row {
+                    spacing: 14
+                    Text {
+                        width: 70
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "EDITAR"
+                        color: Theme.dim
+                        font.family: Theme.font
+                        font.pixelSize: Theme.caption
+                        font.letterSpacing: 1.2
+                        font.bold: true
+                    }
+                    Rectangle {
+                        width: seg.implicitWidth + 2
+                        height: seg.implicitHeight + 2
+                        radius: Theme.radius
+                        color: "transparent"
+                        border.width: 1
+                        border.color: Theme.alpha(Theme.foreground, 0.35)
+                        Row {
+                            id: seg
+                            x: 1
+                            y: 1
+                            Repeater {
+                                model: ["Audífonos 1 · salidas 1-2", "Audífonos 2 · salidas 3-4"]
+                                Rectangle {
+                                    required property var modelData
+                                    required property int index
+                                    readonly property bool current: hpMix.pair === index
+                                    width: segText.implicitWidth + 32
+                                    height: segText.implicitHeight + 14
+                                    radius: Theme.radius
+                                    color: current ? Theme.alpha(Theme.accent, 0.3)
+                                         : segMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.08) : "transparent"
+                                    Text {
+                                        id: segText
+                                        anchors.centerIn: parent
+                                        text: (parent.current ? "● " : "○ ") + modelData
+                                        color: parent.current ? Theme.foreground : Theme.dim
+                                        font.family: Theme.font
+                                        font.pixelSize: Theme.body
+                                        font.bold: parent.current
+                                    }
+                                    MouseArea {
+                                        id: segMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: hpMix.pair = index
+                                    }
                                 }
                             }
                         }
                     }
-                    Row {
-                        spacing: 10
-                        // Presets only stage changes; nothing reaches the EVO until "Aplicar".
-                        function preset(level) {
-                            for (var i = 0; i < page.rows.length; i++)
-                                for (var o = 0; o < page.outputs.length; o++) {
-                                    var db = level(i, o)
-                                    if (db !== null) mixer.hwSetCell(i, o, db)
-                                }
-                        }
-                        Button {
-                            text: "Como de fábrica"
+                }
+
+                // Shortcuts: they only stage changes for the headphones being
+                // edited; nothing reaches the EVO until "Aplicar".
+                Row {
+                    spacing: 14
+                    function preset(level) {
+                        for (var i = 0; i < page.rows.length; i++)
+                            for (var o = hpMix.pair * 2; o <= hpMix.pair * 2 + 1; o++) {
+                                var db = level(i)
+                                if (db !== null) mixer.hwSetCell(i, o, db)
+                            }
+                    }
+                    Text {
+                        width: 70
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "ATAJOS"
+                        color: Theme.dim
+                        font.family: Theme.font
+                        font.pixelSize: Theme.caption
+                        font.letterSpacing: 1.2
+                        font.bold: true
+                    }
+                    Repeater {
+                        model: [
+                            { label: "Como de fábrica", fn: function(i) { return 0 } },
+                            { label: "No oír ninguna entrada", fn: function(i) { return i < 4 ? -128 : null } },
+                            { label: "Oír solo la entrada 1", fn: function(i) { return i === 0 ? 0 : (i < 4 ? -128 : null) } },
+                            { label: "Oír entradas 1 y 2", fn: function(i) { return i < 2 ? 0 : (i < 4 ? -128 : null) } }
+                        ]
+                        Text {
+                            required property var modelData
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "› " + modelData.label
+                            color: shortcutMouse.containsMouse && enabled ? Theme.foreground : Theme.dim
+                            font.family: Theme.font
+                            font.pixelSize: Theme.caption
+                            font.underline: shortcutMouse.containsMouse && enabled
                             enabled: !page.hw.busy && !!page.hw.mix
-                            onClicked: parent.preset(function(i, o) { return 0 })
-                        }
-                        Button {
-                            text: "No oír ninguna entrada"
-                            enabled: !page.hw.busy && !!page.hw.mix
-                            onClicked: parent.preset(function(i, o) { return i < 4 ? -128 : null })
-                        }
-                        Button {
-                            text: "Oír solo la entrada 1"
-                            enabled: !page.hw.busy && !!page.hw.mix
-                            onClicked: parent.preset(function(i, o) { return i === 0 ? 0 : (i < 4 ? -128 : null) })
-                        }
-                        Button {
-                            text: "Oír entradas 1 y 2"
-                            enabled: !page.hw.busy && !!page.hw.mix
-                            onClicked: parent.preset(function(i, o) { return i < 2 ? 0 : (i < 4 ? -128 : null) })
+                            opacity: enabled ? 1 : 0.4
+                            MouseArea {
+                                id: shortcutMouse
+                                anchors.fill: parent
+                                anchors.margins: -4
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: parent.parent.preset(modelData.fn)
+                            }
                         }
                     }
-
                 }
 
                 Row {
