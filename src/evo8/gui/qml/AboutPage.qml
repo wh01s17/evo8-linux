@@ -154,7 +154,7 @@ ScrollView {
                 }
                 Text {
                     width: parent.width
-                    text: (page.a.disclaimer || "") + " EVO y EVO Control son marcas de Audient."
+                    text: (page.a.disclaimer || "") + " EVO es una marca de Audient."
                     color: Theme.dim
                     font.family: Theme.font
                     font.pixelSize: Theme.caption
