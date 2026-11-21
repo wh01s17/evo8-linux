@@ -12,6 +12,9 @@ Item {
     property var state: null          // {level, pan, muted} or null when unknown
     property bool pending: false
     property real floor: -61
+    property real faderHeight: Theme.faderHeight * 0.8
+    // Everything but the fader, so a parent can size the fader to fill a height.
+    readonly property real chromeHeight: col.implicitHeight + 16 - faderBox.height
     signal levelMoved(real level)
     signal panMoved(real pan)
     signal muteToggled()
@@ -56,6 +59,7 @@ Item {
             Text {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
                 text: strip.subtitle === "" ? " " : strip.subtitle
                 color: Theme.dim
                 font.family: Theme.font
@@ -120,8 +124,9 @@ Item {
         }
 
         Item {
+            id: faderBox
             width: parent.width
-            height: Theme.faderHeight * 0.8
+            height: strip.faderHeight
             Item {
                 anchors.centerIn: parent
                 width: 30

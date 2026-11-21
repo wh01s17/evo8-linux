@@ -83,40 +83,55 @@ ScrollView {
         font.bold: true
     }
 
+    // Main area fills the visible window; "Avanzado" opens below it.
+    readonly property real mainHeight: Math.max(460, page.availableHeight - 40)
+
     Column {
         width: page.availableWidth
-        spacing: 22
-        padding: 4
+        spacing: 18
 
-        // ---- actions ----
-        Column {
-            spacing: 8
-            Text {
-                text: "Estos ajustes se guardan en la EVO. Leerlos o aplicarlos corta el audio un instante."
-                color: Theme.dim
-                font.family: Theme.font
-                font.pixelSize: Theme.caption
-            }
-            Row {
-                spacing: 10
-                Button {
-                    text: "Leer de la EVO"
-                    enabled: !page.hw.busy
-                    onClicked: mixer.hwRead()
+        Item {
+            width: parent.width
+            height: page.mainHeight
+
+            // ---- left: actions and inputs ----
+            Column {
+                id: side
+                width: 340
+                height: parent.height
+                spacing: 14
+
+                Text {
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                    text: "Estos ajustes se guardan en la EVO. Leerlos o aplicarlos corta el audio un instante."
+                    color: Theme.dim
+                    font.family: Theme.font
+                    font.pixelSize: Theme.caption
                 }
-                Button {
-                    text: "Aplicar a la EVO"
-                    primary: true
-                    enabled: !page.hw.busy && page.hasPending
-                    onClicked: mixer.hwApply()
-                }
-                Button {
-                    text: "Descartar cambios"
-                    enabled: !page.hw.busy && page.hasPending
-                    onClicked: mixer.hwDiscard()
+                Flow {
+                    width: parent.width
+                    spacing: 8
+                    Button {
+                        text: "Leer de la EVO"
+                        enabled: !page.hw.busy
+                        onClicked: mixer.hwRead()
+                    }
+                    Button {
+                        text: "Aplicar a la EVO"
+                        primary: true
+                        enabled: !page.hw.busy && page.hasPending
+                        onClicked: mixer.hwApply()
+                    }
+                    Button {
+                        text: "Descartar"
+                        enabled: !page.hw.busy && page.hasPending
+                        onClicked: mixer.hwDiscard()
+                    }
                 }
                 Text {
-                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width
+                    wrapMode: Text.WordWrap
                     text: page.hw.message
                         ? page.hw.message
                         : (page.hw.readAt ? "Último estado conocido: " + page.hw.readAt
@@ -125,58 +140,56 @@ ScrollView {
                     font.family: Theme.font
                     font.pixelSize: Theme.caption
                 }
-            }
-        }
 
-        // ---- inputs: phantom and mute ----
-        Column {
-            spacing: 8
-            SectionTitle { text: "ENTRADAS · 48 V Y SILENCIO EN LA EVO" }
-            Row {
-                spacing: 14
-                Repeater {
-                    model: 4
-                    Rectangle {
-                        required property int index
-                        width: 150
-                        height: inCol.implicitHeight + 16
-                        radius: Theme.radius
-                        color: Theme.alpha(Theme.foreground, 0.03)
-                        Column {
-                            id: inCol
-                            anchors.centerIn: parent
-                            spacing: 8
-                            Text {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                text: "IN " + (index + 1)
-                                color: Theme.foreground
-                                font.family: Theme.font
-                                font.pixelSize: Theme.body
-                                font.bold: true
-                            }
-                            Repeater {
-                                model: [{ kind: "phantom", label: "48 V" }, { kind: "mute", label: "SILENCIO" }]
-                                Row {
-                                    required property var modelData
-                                    spacing: 10
-                                    Text {
-                                        width: 64
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: modelData.label
-                                        color: page.flagPending(modelData.kind, index) ? Theme.accent : Theme.dim
-                                        font.family: Theme.font
-                                        font.pixelSize: Theme.caption
-                                        font.bold: true
-                                    }
-                                    Toggle {
-                                        checked: page.flag(modelData.kind, index)
-                                        enabled: !page.hw.busy && !!page.hw[modelData.kind]
-                                        tip: modelData.kind === "phantom"
-                                            ? "Alimentación para micrófonos de condensador"
-                                            : "Silenciar la entrada en la EVO"
-                                        onToggled: modelData.kind === "phantom"
-                                            ? mixer.hwSetPhantom(index, !checked)
-                                            : mixer.hwSetMute(index, !checked)
+                Item { width: 1; height: 6 }
+                SectionTitle { text: "ENTRADAS · 48 V Y SILENCIO" }
+                Grid {
+                    columns: 2
+                    spacing: 10
+                    Repeater {
+                        model: 4
+                        Rectangle {
+                            required property int index
+                            width: (side.width - 10) / 2
+                            height: inCol.implicitHeight + 16
+                            radius: Theme.radius
+                            color: Theme.alpha(Theme.foreground, 0.03)
+                            Column {
+                                id: inCol
+                                anchors.centerIn: parent
+                                spacing: 8
+                                Text {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    text: "IN " + (index + 1)
+                                    color: Theme.foreground
+                                    font.family: Theme.font
+                                    font.pixelSize: Theme.body
+                                    font.bold: true
+                                }
+                                Repeater {
+                                    model: [{ kind: "phantom", label: "48 V" }, { kind: "mute", label: "SILENCIO" }]
+                                    Row {
+                                        required property var modelData
+                                        spacing: 10
+                                        Text {
+                                            width: 72
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: modelData.label
+                                            color: page.flagPending(modelData.kind, index) ? Theme.accent : Theme.dim
+                                            font.family: Theme.font
+                                            font.pixelSize: Theme.caption
+                                            font.bold: true
+                                        }
+                                        Toggle {
+                                            checked: page.flag(modelData.kind, index)
+                                            enabled: !page.hw.busy && !!page.hw[modelData.kind]
+                                            tip: modelData.kind === "phantom"
+                                                ? "Alimentación para micrófonos de condensador"
+                                                : "Silenciar la entrada en la EVO"
+                                            onToggled: modelData.kind === "phantom"
+                                                ? mixer.hwSetPhantom(index, !checked)
+                                                : mixer.hwSetMute(index, !checked)
+                                        }
                                     }
                                 }
                             }
@@ -184,12 +197,23 @@ ScrollView {
                     }
                 }
             }
-        }
 
-        // ---- what the headphones hear directly (EVO Control's mixer) ----
-        Column {
-            id: hpMix
-            spacing: 10
+            Rectangle {
+                id: split
+                x: side.width + 20
+                width: 1
+                height: parent.height
+                color: Theme.alpha(Theme.foreground, 0.12)
+            }
+
+            // ---- right: what the headphones hear directly (EVO Control's mixer) ----
+            Column {
+                id: hpMix
+                anchors.left: split.right
+                anchors.leftMargin: 20
+                anchors.right: parent.right
+                height: parent.height
+                spacing: 10
             // 0 = audífonos 1 (outputs 1-2), 1 = audífonos 2 (outputs 3-4).
             property int pair: 0
             // Level and pan each strip had before muting, to bring them back.
@@ -243,109 +267,123 @@ ScrollView {
                 }
             }
 
-            SectionTitle { text: "LO QUE OYES DIRECTO EN LOS AUDÍFONOS · SIN PASAR POR EL PC, SIN LATENCIA" }
 
-            // Which headphone mix is being edited.
-            Row {
-                spacing: 8
-                Repeater {
-                    model: ["AUDÍFONOS 1 · salidas 1-2", "AUDÍFONOS 2 · salidas 3-4"]
-                    Rectangle {
-                        required property var modelData
-                        required property int index
-                        readonly property bool current: hpMix.pair === index
-                        width: tabText.implicitWidth + 28
-                        height: tabText.implicitHeight + 14
-                        radius: Theme.radius
-                        color: current ? Theme.alpha(Theme.foreground, 0.12)
-                             : tabMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.06) : "transparent"
-                        border.width: 1
-                        border.color: current ? Theme.accent : Theme.alpha(Theme.foreground, 0.25)
-                        Text {
-                            id: tabText
-                            anchors.centerIn: parent
-                            text: modelData
-                            color: Theme.foreground
-                            font.family: Theme.font
-                            font.pixelSize: Theme.caption
-                            font.bold: parent.current
-                            font.letterSpacing: 1.1
+                SectionTitle { text: "LO QUE OYES DIRECTO EN LOS AUDÍFONOS · SIN PASAR POR EL PC, SIN LATENCIA" }
+
+                Flow {
+                    id: controls
+                    width: parent.width
+                    spacing: 18
+                    // Which headphone mix is being edited.
+                    Row {
+                        spacing: 8
+                        Repeater {
+                            model: ["AUDÍFONOS 1 · salidas 1-2", "AUDÍFONOS 2 · salidas 3-4"]
+                            Rectangle {
+                                required property var modelData
+                                required property int index
+                                readonly property bool current: hpMix.pair === index
+                                width: tabText.implicitWidth + 28
+                                height: tabText.implicitHeight + 14
+                                radius: Theme.radius
+                                color: current ? Theme.alpha(Theme.foreground, 0.12)
+                                     : tabMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.06) : "transparent"
+                                border.width: 1
+                                border.color: current ? Theme.accent : Theme.alpha(Theme.foreground, 0.25)
+                                Text {
+                                    id: tabText
+                                    anchors.centerIn: parent
+                                    text: modelData
+                                    color: Theme.foreground
+                                    font.family: Theme.font
+                                    font.pixelSize: Theme.caption
+                                    font.bold: parent.current
+                                    font.letterSpacing: 1.1
+                                }
+                                MouseArea {
+                                    id: tabMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: hpMix.pair = index
+                                }
+                            }
                         }
-                        MouseArea {
-                            id: tabMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: hpMix.pair = index
+                    }
+                    Row {
+                        spacing: 10
+                        // Presets only stage changes; nothing reaches the EVO until "Aplicar".
+                        function preset(level) {
+                            for (var i = 0; i < page.rows.length; i++)
+                                for (var o = 0; o < page.outputs.length; o++) {
+                                    var db = level(i, o)
+                                    if (db !== null) mixer.hwSetCell(i, o, db)
+                                }
+                        }
+                        Button {
+                            text: "Como de fábrica"
+                            enabled: !page.hw.busy && !!page.hw.mix
+                            onClicked: parent.preset(function(i, o) { return 0 })
+                        }
+                        Button {
+                            text: "No oír ninguna entrada"
+                            enabled: !page.hw.busy && !!page.hw.mix
+                            onClicked: parent.preset(function(i, o) { return i < 4 ? -128 : null })
+                        }
+                        Button {
+                            text: "Oír solo la entrada 1"
+                            enabled: !page.hw.busy && !!page.hw.mix
+                            onClicked: parent.preset(function(i, o) { return i === 0 ? 0 : (i < 4 ? -128 : null) })
+                        }
+                        Button {
+                            text: "Oír entradas 1 y 2"
+                            enabled: !page.hw.busy && !!page.hw.mix
+                            onClicked: parent.preset(function(i, o) { return i < 2 ? 0 : (i < 4 ? -128 : null) })
+                        }
+                    }
+
+                }
+
+                Row {
+                    id: strips
+                    spacing: 6
+                    readonly property real stripWidth: (hpMix.width - spacing * (hpMix.sources.length - 1)) / hpMix.sources.length
+                    readonly property real available: hpMix.height - y - hint.height - hpMix.spacing
+                    Repeater {
+                        model: hpMix.sources
+                        HwMixStrip {
+                            required property var modelData
+                            width: strips.stripWidth
+                            faderHeight: Math.max(120, strips.available - chromeHeight)
+                            title: modelData.title
+                            subtitle: modelData.subtitle
+                            floor: page.offPosition
+                            state: page.hw.mix ? hpMix.stateOf(modelData) : null
+                            pending: hpMix.isPending(modelData)
+                            enabled: !page.hw.busy
+                            onLevelMoved: function(v) {
+                                var st = hpMix.stateOf(modelData)
+                                hpMix.write(modelData, v, st && !st.muted ? st.pan : 0)
+                            }
+                            onPanMoved: function(p) {
+                                var st = hpMix.stateOf(modelData)
+                                if (st && !st.muted) hpMix.write(modelData, st.level, p)
+                            }
+                            onMuteToggled: hpMix.toggleMute(modelData)
                         }
                     }
                 }
-            }
-
-            Row {
-                spacing: 10
-                // Presets only stage changes; nothing reaches the EVO until "Aplicar".
-                function preset(level) {
-                    for (var i = 0; i < page.rows.length; i++)
-                        for (var o = 0; o < page.outputs.length; o++) {
-                            var db = level(i, o)
-                            if (db !== null) mixer.hwSetCell(i, o, db)
-                        }
+                Text {
+                    id: hint
+                    width: parent.width
+                    elide: Text.ElideRight
+                    text: page.hw.mix
+                        ? "Fader abajo del todo o 󰝟 = no oír esa fuente. Los cambios llegan a la EVO al pulsar «Aplicar a la EVO»."
+                        : "Pulsa «Leer de la EVO» para ver y cambiar estos valores."
+                    color: Theme.dim
+                    font.family: Theme.font
+                    font.pixelSize: Theme.caption
                 }
-                Button {
-                    text: "Como de fábrica"
-                    enabled: !page.hw.busy && !!page.hw.mix
-                    onClicked: parent.preset(function(i, o) { return 0 })
-                }
-                Button {
-                    text: "No oír ninguna entrada"
-                    enabled: !page.hw.busy && !!page.hw.mix
-                    onClicked: parent.preset(function(i, o) { return i < 4 ? -128 : null })
-                }
-                Button {
-                    text: "Oír solo la entrada 1"
-                    enabled: !page.hw.busy && !!page.hw.mix
-                    onClicked: parent.preset(function(i, o) { return i === 0 ? 0 : (i < 4 ? -128 : null) })
-                }
-                Button {
-                    text: "Oír entradas 1 y 2"
-                    enabled: !page.hw.busy && !!page.hw.mix
-                    onClicked: parent.preset(function(i, o) { return i < 2 ? 0 : (i < 4 ? -128 : null) })
-                }
-            }
-
-
-            Row {
-                spacing: 6
-                Repeater {
-                    model: hpMix.sources
-                    HwMixStrip {
-                        required property var modelData
-                        title: modelData.title
-                        subtitle: modelData.subtitle
-                        floor: page.offPosition
-                        state: page.hw.mix ? hpMix.stateOf(modelData) : null
-                        pending: hpMix.isPending(modelData)
-                        enabled: !page.hw.busy
-                        onLevelMoved: function(v) {
-                            var st = hpMix.stateOf(modelData)
-                            hpMix.write(modelData, v, st && !st.muted ? st.pan : 0)
-                        }
-                        onPanMoved: function(p) {
-                            var st = hpMix.stateOf(modelData)
-                            if (st && !st.muted) hpMix.write(modelData, st.level, p)
-                        }
-                        onMuteToggled: hpMix.toggleMute(modelData)
-                    }
-                }
-            }
-            Text {
-                text: page.hw.mix
-                    ? "Fader abajo del todo o 󰝟 = no oír esa fuente. Los cambios llegan a la EVO al pulsar «Aplicar a la EVO»."
-                    : "Pulsa «Leer de la EVO» para ver y cambiar estos valores."
-                color: Theme.dim
-                font.family: Theme.font
-                font.pixelSize: Theme.caption
             }
         }
 
