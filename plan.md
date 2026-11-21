@@ -199,6 +199,11 @@ MonitorController del EVO 16 (no aplica al EVO 8).
   cambios en espera y "Aplicar a la EVO"). `evo8-mixer --evo` abre en la
   pestaña de hardware. App id Wayland: `evo8-mixer`. Una sola ventana;
   `EVO8_MIXER_INSTANCE=<nombre>` abre una instancia aparte (pruebas).
+- **Logo** (aprobado por el usuario, opción B de tres): un 8 en píxeles con los
+  colores de un medidor (rojo, ámbar, verde). Fuente única:
+  `src/evo8/gui/evo8-mixer.svg` (va en el paquete Python; `make install` y el
+  PKGBUILD lo copian a `hicolor/scalable/apps`; `.desktop` usa
+  `Icon=evo8-mixer`). Necesita `qt6-svg`, que `pyside6` no arrastra.
 
 ### En los dotfiles (`~/dotfiles`)
 

@@ -1,3 +1,5 @@
+<p align="center"><img src="src/evo8/gui/evo8-mixer.svg" width="112" alt="Logo de evo8-linux: un 8 en píxeles con los colores de un medidor de nivel"></p>
+
 # evo8-linux
 
 Control del **Audient EVO 8** en Linux, más un micrófono virtual pensado para
@@ -64,7 +66,7 @@ dependencias, incluida la fuente *JetBrainsMono Nerd Font* de los íconos.
 ### Desde el código (desarrollo)
 
 Requisitos: PipeWire + WirePlumber, `pactl`, `amixer`, Python ≥ 3.11,
-`python-pyusb` para el control por USB, `pyside6` para la ventana y
+`python-pyusb` para el control por USB, `pyside6` y `qt6-svg` para la ventana y
 *JetBrainsMono Nerd Font* (`ttf-jetbrains-mono-nerd`) para los íconos.
 
 ```sh
