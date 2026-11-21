@@ -12,7 +12,21 @@ ScrollView {
     readonly property var hw: mixer.hardware
     readonly property var pending: hw.pending || ({})
     readonly property string pendingLoopback: hw.pendingLoopback || ""
+    readonly property var pendingPhantom: hw.pendingPhantom || ({})
+    readonly property var pendingMute: hw.pendingMute || ({})
     readonly property bool hasPending: Object.keys(pending).length > 0 || pendingLoopback !== ""
+        || Object.keys(pendingPhantom).length > 0 || Object.keys(pendingMute).length > 0
+
+    // Flag as it will be after "Aplicar": pending value, else last read.
+    function flag(kind, i) {
+        var p = kind === "phantom" ? pendingPhantom : pendingMute
+        if (p[String(i)] !== undefined) return p[String(i)]
+        var cur = hw[kind]
+        return cur ? !!cur[i] : false
+    }
+    function flagPending(kind, i) {
+        return (kind === "phantom" ? pendingPhantom : pendingMute)[String(i)] !== undefined
+    }
     readonly property var rows: ["IN 1", "IN 2", "IN 3", "IN 4", "PC 1", "PC 2", "PC 3", "PC 4", "PC 5", "PC 6"]
     readonly property var outputs: ["OUT 1", "OUT 2", "OUT 3", "OUT 4"]
     readonly property var loopbackOptions: [
@@ -114,6 +128,64 @@ ScrollView {
             }
         }
 
+        // ---- inputs: phantom and mute ----
+        Column {
+            spacing: 8
+            SectionTitle { text: "ENTRADAS · 48 V Y SILENCIO EN LA EVO" }
+            Row {
+                spacing: 14
+                Repeater {
+                    model: 4
+                    Rectangle {
+                        required property int index
+                        width: 150
+                        height: inCol.implicitHeight + 16
+                        radius: Theme.radius
+                        color: Theme.alpha(Theme.foreground, 0.03)
+                        Column {
+                            id: inCol
+                            anchors.centerIn: parent
+                            spacing: 8
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: "IN " + (index + 1)
+                                color: Theme.foreground
+                                font.family: Theme.font
+                                font.pixelSize: Theme.body
+                                font.bold: true
+                            }
+                            Repeater {
+                                model: [{ kind: "phantom", label: "48 V" }, { kind: "mute", label: "SILENCIO" }]
+                                Row {
+                                    required property var modelData
+                                    spacing: 10
+                                    Text {
+                                        width: 64
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: modelData.label
+                                        color: page.flagPending(modelData.kind, index) ? Theme.accent : Theme.dim
+                                        font.family: Theme.font
+                                        font.pixelSize: Theme.caption
+                                        font.bold: true
+                                    }
+                                    Toggle {
+                                        checked: page.flag(modelData.kind, index)
+                                        enabled: !page.hw.busy && !!page.hw[modelData.kind]
+                                        tip: modelData.kind === "phantom"
+                                            ? "Alimentación para micrófonos de condensador"
+                                            : "Silenciar la entrada en la EVO"
+                                        onToggled: modelData.kind === "phantom"
+                                            ? mixer.hwSetPhantom(index, !checked)
+                                            : mixer.hwSetMute(index, !checked)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // ---- loop-back ----
         Column {
             spacing: 8
@@ -173,6 +245,32 @@ ScrollView {
         Column {
             spacing: 8
             SectionTitle { text: "MEZCLA DE MONITOREO INTERNA · dB (izquierda del todo = apagado)" }
+            Row {
+                spacing: 10
+                // Presets only stage changes; nothing reaches the EVO until "Aplicar".
+                function preset(level) {
+                    for (var i = 0; i < page.rows.length; i++)
+                        for (var o = 0; o < page.outputs.length; o++) {
+                            var db = level(i, o)
+                            if (db !== null) mixer.hwSetCell(i, o, db)
+                        }
+                }
+                Button {
+                    text: "Fábrica (todo a 0 dB)"
+                    enabled: !page.hw.busy && !!page.hw.mix
+                    onClicked: parent.preset(function(i, o) { return 0 })
+                }
+                Button {
+                    text: "Sin monitoreo directo"
+                    enabled: !page.hw.busy && !!page.hw.mix
+                    onClicked: parent.preset(function(i, o) { return i < 4 ? -128 : null })
+                }
+                Button {
+                    text: "Entradas 1-2 a los audífonos"
+                    enabled: !page.hw.busy && !!page.hw.mix
+                    onClicked: parent.preset(function(i, o) { return i < 2 ? 0 : (i < 4 ? -128 : null) })
+                }
+            }
             Text {
                 text: "Lo que la EVO manda directo a sus salidas, sin pasar por el PC. OUT 1-2 = audífonos 1, OUT 3-4 = audífonos 2."
                 color: Theme.dim

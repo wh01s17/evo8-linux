@@ -91,6 +91,8 @@ class Backend(QObject):
         self._hw: dict = {
             "mix": saved.get("mix"), "loopback": saved.get("loopback"),
             "readAt": saved.get("readAt"), "pending": {}, "pendingLoopback": None,
+            "phantom": saved.get("phantom"), "mute": saved.get("mute"),
+            "pendingPhantom": {}, "pendingMute": {},
             "busy": False, "message": "",
         }
         self._meters_view: dict = {}
@@ -370,9 +372,26 @@ class Backend(QObject):
     def hwSetLoopback(self, name: str) -> None:
         self._hw_set(pendingLoopback=None if name == self._hw["loopback"] else name)
 
+    def _hw_flag(self, kind: str, inp: int, on: bool) -> None:
+        current = (self._hw.get(kind) or [None] * 4)[inp]
+        pending = dict(self._hw["pending" + kind.capitalize()])
+        if current is not None and bool(current) == on:
+            pending.pop(str(inp), None)
+        else:
+            pending[str(inp)] = on
+        self._hw_set(**{"pending" + kind.capitalize(): pending})
+
+    @Slot(int, bool)
+    def hwSetPhantom(self, inp: int, on: bool) -> None:
+        self._hw_flag("phantom", inp, on)
+
+    @Slot(int, bool)
+    def hwSetMute(self, inp: int, on: bool) -> None:
+        self._hw_flag("mute", inp, on)
+
     @Slot()
     def hwDiscard(self) -> None:
-        self._hw_set(pending={}, pendingLoopback=None, message="")
+        self._hw_set(pending={}, pendingLoopback=None, pendingPhantom={}, pendingMute={}, message="")
 
     @Slot()
     def hwApply(self) -> None:
@@ -380,12 +399,14 @@ class Backend(QObject):
             return
         changes = [(int(k.split(",")[0]), int(k.split(",")[1]), float(v)) for k, v in self._hw["pending"].items()]
         loop = self._hw["pendingLoopback"]
-        if not changes and loop is None:
+        phantom = {int(k): v for k, v in self._hw["pendingPhantom"].items()}
+        mute = {int(k): v for k, v in self._hw["pendingMute"].items()}
+        if not changes and loop is None and not phantom and not mute:
             return
         self._hw_set(busy=True, message="Aplicando a la EVO…")
 
         def job():
-            hw.apply(changes, loop)
+            hw.apply(changes, loop, phantom, mute)
             return hw.read_all()
 
         self._worker.submit("hw-apply", job)
@@ -395,9 +416,12 @@ class Backend(QObject):
             self._hw_set(busy=False, message="Error: " + error)
             return
         read_at = time.strftime("%H:%M:%S")
-        state.save("hw", {"mix": result["mix"], "loopback": result["loopback"], "readAt": read_at})
+        state.save("hw", {"mix": result["mix"], "loopback": result["loopback"], "readAt": read_at,
+                          "phantom": result["phantom"], "mute": result["mute"]})
         self._hw_set(busy=False, mix=result["mix"], loopback=result["loopback"], readAt=read_at,
-                     pending={}, pendingLoopback=None, message=ok_text)
+                     phantom=result["phantom"], mute=result["mute"],
+                     pending={}, pendingLoopback=None, pendingPhantom={}, pendingMute={},
+                     message=ok_text)
 
     # ---- meters ----
     def _update_meters(self) -> None:
