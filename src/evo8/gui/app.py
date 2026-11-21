@@ -31,7 +31,8 @@ def main(argv: list[str] | None = None) -> int:
 
     # One window at a time: a second launch asks the running one to come to
     # the front and exits.
-    name = f"evo8-mixer-{os.getuid()}"
+    # EVO8_MIXER_INSTANCE gives a separate instance (tests, a second window).
+    name = os.environ.get("EVO8_MIXER_INSTANCE") or f"evo8-mixer-{os.getuid()}"
     probe = QLocalSocket()
     probe.connectToServer(name)
     if probe.waitForConnected(300):
