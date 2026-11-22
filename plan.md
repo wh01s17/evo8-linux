@@ -108,7 +108,9 @@ mezcla.suma = filter-chain: compL/compR (delay) ─► mix (Gain 1-4) ─► "Me
 
 - General: `pw-link Mezcla:capture_MONO` → primeros 2 puertos `playback_*` de la
   salida por defecto; silencia `mezcla.compartido.escucha` (ya va en la mezcla) y
-  fuerza `clock.force-quantum` = 128 (`EVO8_MONITOR_QUANTUM`).
+  fuerza `clock.force-quantum` = 128 (`EVO8_MONITOR_QUANTUM`), salvo si la
+  salida es Bluetooth (`bluez_output.*`): el quantum es global y ahí
+  entrecortaba todo. `status` lo revisa también con el general encendido.
 - Por entrada: enlaza `…pro-input-0:capture_AUXn` a la salida; las entradas
   pedidas se guardan en `$XDG_RUNTIME_DIR/evo8-monitor-inputs`; mientras el
   general está encendido se suspenden.
@@ -118,6 +120,10 @@ mezcla.suma = filter-chain: compL/compR (delay) ─► mix (Gain 1-4) ─► "Me
   re-enlazaba varias veces por segundo (probable causa de xruns en una clase).
 - `pw-link --wait` al enlazar, para que la lectura siguiente vea el enlace.
 - `status` se auto-repara (marcador en `$XDG_RUNTIME_DIR/evo8-monitor`).
+- Tiempo real (`rt.py`): si `xdg-desktop-portal` arrancó antes de que rtkit
+  existiera, informa `RTTimeUSecMax` = 0 y PipeWire deja a los clientes con
+  RLIMIT_RTTIME 0: el kernel mata con SIGKILL a mpv y compañía al azar (cortes
+  de audio). `evoctl setup` lo detecta; arreglo: reiniciar el portal.
 
 ### 3.3 Ventana (src/evo8/gui)
 
@@ -294,8 +300,8 @@ EVO8_MIXER_INSTANCE=dev PYTHONPATH=src python3 -m evo8.gui.app   # la ventana de
 - **Publicar una versión**: seguir `PUBLISH.md` (changelog, versión, tag).
   El tag `vX.Y.Z` dispara `.github/workflows/release.yml`: PyPI (trusted
   publishing, entorno `pypi`) y la release de GitHub con la sección de
-  `CHANGELOG.md` (`tools/release_notes.py`). Última publicada: **0.1.1**
-  (2026-11-21, https://pypi.org/project/evo8-linux/).
+  `CHANGELOG.md` (`tools/release_notes.py`). Última publicada: **0.2.0**
+  (2026-11-22, https://pypi.org/project/evo8-linux/).
 - Mientras se trabaja, anotar los cambios visibles en `## [Sin publicar]` de
   `CHANGELOG.md`.
 

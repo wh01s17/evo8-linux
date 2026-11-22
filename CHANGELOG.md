@@ -8,6 +8,8 @@ Cómo publicar una versión: [`PUBLISH.md`](https://github.com/wh01s17/evo8-linu
 
 ## [Sin publicar]
 
+## [0.2.0] - 2026-11-22
+
 ### Agregado
 
 - `evoctl setup` avisa cuando el portal de escritorio informa 0 µs de tiempo
@@ -91,6 +93,7 @@ Primera versión publicada.
 - CI en GitHub Actions: tests en Arch, paquete de Arch con `namcap` y el wheel
   instalado y probado en Ubuntu con Python 3.11 y 3.13.
 
-[Sin publicar]: https://github.com/wh01s17/evo8-linux/compare/v0.1.1...HEAD
+[Sin publicar]: https://github.com/wh01s17/evo8-linux/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/wh01s17/evo8-linux/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/wh01s17/evo8-linux/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/wh01s17/evo8-linux/releases/tag/v0.1.0
