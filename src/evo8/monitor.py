@@ -3,7 +3,8 @@
 The full monitor links the Mezcla source straight onto the selected output's
 first two channels (FL/FR, or AUX0/AUX1 on a Pro Audio interface): a direct
 port link adds no buffering of its own, so the delay is the graph quantum,
-which is lowered while monitoring. The Compartido listening loopback is muted
+which is lowered while monitoring (not on a Bluetooth output, which cannot
+take it). The Compartido listening loopback is muted
 meanwhile, because the mix already carries it and it would be heard twice.
 
 Each interface input can also be heard on its own: its capture port is linked
@@ -91,6 +92,9 @@ def status() -> str:
         result = "off"
     if INPUTS_FILE.exists():
         sync_inputs()
+    # Also while the full monitor is on: the selected output may have become a
+    # Bluetooth one, which must not keep the low quantum.
+    if result == "on" or INPUTS_FILE.exists():
         update_quantum()
     return result
 
@@ -198,11 +202,22 @@ def _any_input_linked() -> bool:
     return any(_playback_links(p) for p in interface_ports())
 
 
+def low_quantum_ok(sink: str | None = None) -> bool:
+    """Whether the selected output can take the low quantum.
+
+    A forced quantum is global: every stream on the system runs at it, not only
+    the monitor. A Bluetooth output needs far bigger buffers (WirePlumber gives
+    it ~1024), so forcing 128 on one glitches everything that plays, and the
+    radio link adds more delay than the quantum would save anyway."""
+    sink = pw.default_sink() if sink is None else sink
+    return not sink.startswith("bluez_output.")
+
+
 def update_quantum() -> None:
-    """Hold the low quantum while anything is monitored. Only our own value is
-    ever undone, never one something else forced."""
+    """Hold the low quantum while anything is monitored on an output that can
+    take it. Only our own value is ever undone, never one something else forced."""
     current = pw.force_quantum()
-    if is_on() or _any_input_linked():
+    if (is_on() or _any_input_linked()) and low_quantum_ok():
         if current == 0:
             pw.set_force_quantum(QUANTUM)
     elif current == QUANTUM:

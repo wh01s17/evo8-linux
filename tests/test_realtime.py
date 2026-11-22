@@ -1,7 +1,9 @@
+import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
-from evo8 import pw, rt
+from evo8 import monitor, pw, rt
 
 
 def busctl(portal: str, rtkit: str):
@@ -39,6 +41,50 @@ class Realtime(unittest.TestCase):
         with mock.patch.object(rt.shutil, "which", return_value=None):
             self.assertEqual(rt.limits(), (None, None))
             self.assertEqual(rt.problem(), "")
+
+
+class MonitorQuantum(unittest.TestCase):
+    def setUp(self):
+        self.forced = 0
+        self.sink = "alsa_output.usb-Audient_EVO8-00.pro-output-0"
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        for target, attr, value in (
+            (pw, "force_quantum", lambda: self.forced),
+            (pw, "set_force_quantum", self._set),
+            (pw, "default_sink", lambda: self.sink),
+            (monitor, "is_on", lambda: True),
+            (monitor, "available", lambda: True),
+            (monitor, "MARKER", Path(tmp.name) / "marker"),
+            (monitor, "INPUTS_FILE", Path(tmp.name) / "inputs"),
+        ):
+            patcher = mock.patch.object(target, attr, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def _set(self, value):
+        self.forced = value
+
+    def test_wired_output_gets_the_low_quantum(self):
+        monitor.update_quantum()
+        self.assertEqual(self.forced, monitor.QUANTUM)
+
+    def test_bluetooth_output_is_left_alone(self):
+        self.sink = "bluez_output.B8_D5_0B_AF_50_23.1"
+        monitor.update_quantum()
+        self.assertEqual(self.forced, 0)
+
+    def test_switching_to_bluetooth_while_on_releases_it(self):
+        monitor.update_quantum()
+        self.sink = "bluez_output.B8_D5_0B_AF_50_23.1"
+        self.assertEqual(monitor.status(), "on")
+        self.assertEqual(self.forced, 0)
+
+    def test_never_undoes_a_quantum_someone_else_forced(self):
+        self.forced = 256
+        self.sink = "bluez_output.B8_D5_0B_AF_50_23.1"
+        monitor.update_quantum()
+        self.assertEqual(self.forced, 256)
 
 
 if __name__ == "__main__":
