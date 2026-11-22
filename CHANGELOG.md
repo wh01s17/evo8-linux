@@ -8,6 +8,11 @@ Cómo publicar una versión: [`PUBLISH.md`](https://github.com/wh01s17/evo8-linu
 
 ## [Sin publicar]
 
+### Documentación
+
+- README: un índice, y cómo instalar, actualizar y desinstalar con cada
+  método (paquete de Arch, pipx y desde el código), y qué hacer después.
+
 ## [0.2.0] - 2026-11-22
 
 ### Agregado

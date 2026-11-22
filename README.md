@@ -19,6 +19,24 @@ junta tus entradas con el audio de otras apps.
 
 ![La pestaña CONSOLA del mezclador: entradas, Compartido, la Mezcla, la salida y los perfiles de cada tarjeta](https://raw.githubusercontent.com/wh01s17/evo8-linux/main/docs/img/consola.png)
 
+## Índice
+
+- [Qué hace](#qué-hace)
+- [Instalación](#instalación)
+  - [Arch Linux](#arch-linux)
+  - [Otras distribuciones (pipx)](#otras-distribuciones-pipx)
+  - [Desde el código](#desde-el-código)
+  - [Después de actualizar o desinstalar](#después-de-actualizar-o-desinstalar)
+  - [Primeros pasos](#primeros-pasos)
+- [Uso](#uso)
+  - [La ventana](#la-ventana)
+  - [La línea de comandos](#la-línea-de-comandos)
+  - [Si el audio se corta](#si-el-audio-se-corta)
+- [Cómo funciona](#cómo-funciona)
+- [El repositorio](#el-repositorio)
+- [Advertencia](#advertencia)
+- [Licencia](#licencia)
+
 ## Qué hace
 
 **El hardware de la EVO 8**
@@ -60,7 +78,12 @@ junta tus entradas con el audio de otras apps.
 Solo para la **Audient EVO 8** (no la EVO 4 ni la EVO 16). El control por USB
 se probó con el firmware 1.4c.
 
+Hay tres formas de instalarla. Elige una sola: si mezclas dos, los comandos
+de una tapan a los de la otra. `evoctl --version` dice cuál versión tienes.
+
 ### Arch Linux
+
+**Instalar**
 
 ```sh
 git clone https://github.com/wh01s17/evo8-linux
@@ -71,7 +94,26 @@ makepkg -si
 Instala todo en el sistema y trae las dependencias, incluida la fuente de los
 íconos. Después, desconecta y vuelve a conectar la EVO una vez.
 
+**Actualizar**
+
+```sh
+cd evo8-linux/packaging/arch
+git pull
+makepkg -si
+```
+
+El paquete se compila siempre desde lo último de GitHub. `git pull` trae el
+PKGBUILD al día, por si cambió.
+
+**Desinstalar**
+
+```sh
+sudo pacman -Rns evo8-linux-git
+```
+
 ### Otras distribuciones (pipx)
+
+**Instalar**
 
 ```sh
 pipx install "evo8-linux[gui,usb]"
@@ -83,16 +125,36 @@ PipeWire, el servicio que restaura los ajustes y la entrada del menú, y te da
 el comando `sudo` exacto para la regla udev (control por USB sin root). También
 avisa si falta algo del sistema: PipeWire, WirePlumber, `pactl`, `amixer` o la
 fuente *JetBrainsMono Nerd Font*, y si el portal de escritorio quedó con 0 µs
-de tiempo real (ver [Si el audio se corta](#si-el-audio-se-corta)). Después de
-`pipx upgrade`, vuelve a correr
-`evoctl setup`. Para desinstalar: `evoctl setup --remove` y
-`pipx uninstall evo8-linux`.
+de tiempo real (ver [Si el audio se corta](#si-el-audio-se-corta)).
+
+**Actualizar**
+
+```sh
+pipx upgrade evo8-linux
+evoctl setup
+```
+
+`evoctl setup` va después de cada actualización: deja al día los archivos que
+copió a tu usuario.
+
+**Desinstalar**
+
+```sh
+evoctl setup --remove
+pipx uninstall evo8-linux
+sudo rm /etc/udev/rules.d/70-audient-evo8.rules
+```
+
+`evoctl setup --remove` quita los archivos de tu usuario. La regla udev la
+pusiste con `sudo`, así que se quita igual.
 
 ### Desde el código
 
 Requisitos: PipeWire + WirePlumber, `pactl`, `amixer`, Python ≥ 3.11,
 `python-pyusb`, `pyside6`, `qt6-svg` y *JetBrainsMono Nerd Font*
 (`ttf-jetbrains-mono-nerd`).
+
+**Instalar**
 
 ```sh
 git clone https://github.com/wh01s17/evo8-linux
@@ -101,8 +163,35 @@ make install      # evoctl y evo8-mixer en ~/.local/bin, apuntando a esta carpet
 sudo make udev    # control por USB sin root
 ```
 
-No mezcles esta instalación con el paquete: los lanzadores de
-`~/.local/bin` tendrían prioridad. `make uninstall` los quita.
+**Actualizar**
+
+```sh
+cd evo8-linux
+git pull
+make install
+```
+
+Los comandos y la config de PipeWire apuntan a la carpeta, así que `git pull`
+basta para ellos. `make install` actualiza las copias: el servicio y la
+entrada del menú.
+
+**Desinstalar**
+
+```sh
+cd evo8-linux
+make uninstall
+sudo rm /etc/udev/rules.d/70-audient-evo8.rules
+```
+
+### Después de actualizar o desinstalar
+
+- Si la actualización cambió la Mezcla, o si desinstalaste, reinicia PipeWire
+  para cargarla o quitarla (corta el audio un momento):
+  `systemctl --user restart pipewire pipewire-pulse wireplumber`.
+- Reabre la ventana para usar la versión nueva.
+- Desinstalar no borra tus ajustes guardados (ganancias, retardo, preamps y
+  mezcla interna). Si no vas a volver a instalarla:
+  `rm -r ~/.local/state/evo8`.
 
 ### Primeros pasos
 
