@@ -111,6 +111,10 @@ def checks() -> list[str]:
         out = subprocess.run(["fc-list", FONT], capture_output=True, text=True).stdout
         if not out.strip():
             problems.append(f"Falta la fuente «{FONT}»: los íconos de la ventana se verán como cuadros.")
+    from . import rt
+    realtime = rt.problem()
+    if realtime:
+        problems.append(realtime)
     return problems
 
 
