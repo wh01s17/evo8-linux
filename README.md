@@ -82,7 +82,9 @@ pip solo instala Python. `evoctl setup` copia a tu usuario la config de
 PipeWire, el servicio que restaura los ajustes y la entrada del menú, y te da
 el comando `sudo` exacto para la regla udev (control por USB sin root). También
 avisa si falta algo del sistema: PipeWire, WirePlumber, `pactl`, `amixer` o la
-fuente *JetBrainsMono Nerd Font*. Después de `pipx upgrade`, vuelve a correr
+fuente *JetBrainsMono Nerd Font*, y si el portal de escritorio quedó con 0 µs
+de tiempo real (ver [Si el audio se corta](#si-el-audio-se-corta)). Después de
+`pipx upgrade`, vuelve a correr
 `evoctl setup`. Para desinstalar: `evoctl setup --remove` y
 `pipx uninstall evo8-linux`.
 
@@ -165,6 +167,20 @@ evoctl --help                     # todos los comandos
 
 La salida es JSON o un valor por línea, para usarla en scripts o en una barra
 de escritorio.
+
+### Si el audio se corta
+
+- **Se corta en todas las apps y los reproductores se cierran solos** (mpv
+  muere y vuelve a abrir): suele ser el portal de escritorio. Si `rtkit` se
+  instaló con la sesión ya abierta, el portal se queda informando 0 µs de
+  tiempo real y el kernel mata cada programa de audio que pide tiempo real.
+  `evoctl setup` lo detecta. Se arregla con
+  `systemctl --user restart xdg-desktop-portal` (o cerrando sesión) y
+  volviendo a abrir esos programas.
+- **Con el monitor encendido**: el monitor baja la latencia de *todo*
+  PipeWire (quantum 128). En una salida Bluetooth no lo hace, porque esa
+  salida necesita búferes grandes y se entrecortaría; ahí el monitor funciona
+  igual, con la latencia propia del Bluetooth.
 
 ## Cómo funciona
 

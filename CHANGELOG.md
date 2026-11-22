@@ -8,6 +8,20 @@ Cómo publicar una versión: [`PUBLISH.md`](https://github.com/wh01s17/evo8-linu
 
 ## [Sin publicar]
 
+### Agregado
+
+- `evoctl setup` avisa cuando el portal de escritorio informa 0 µs de tiempo
+  real mientras rtkit permite más. Pasa si rtkit se instala con la sesión
+  abierta, y hace que el kernel mate los programas de audio (mpv, navegadores)
+  y su sonido se corte. El aviso trae el comando que lo arregla.
+
+### Corregido
+
+- El monitor ya no fuerza el quantum bajo cuando la salida seleccionada es
+  Bluetooth: era global y entrecortaba todo lo que sonaba. Si cambias a una
+  salida Bluetooth con el monitor encendido, lo suelta en la siguiente
+  revisión del estado.
+
 ## [0.1.1] - 2026-11-21
 
 ### Cambiado
