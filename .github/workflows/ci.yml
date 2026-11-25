@@ -15,7 +15,7 @@ jobs:
       - name: Install dependencies
         run: |
           pacman -Syu --noconfirm --needed git make python python-pyusb pyside6 qt6-svg nodejs
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Run tests
         env:
           QT_QPA_PLATFORM: offscreen
@@ -28,7 +28,7 @@ jobs:
       matrix:
         python: ["3.11", "3.13"]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
@@ -82,7 +82,7 @@ jobs:
       - name: Install build tools
         run: |
           pacman -Syu --noconfirm --needed base-devel git namcap sudo
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0   # pkgver counts commits
       - name: Prepare an unprivileged builder (makepkg refuses root)
