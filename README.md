@@ -1,8 +1,8 @@
 <p align="center"><img src="https://raw.githubusercontent.com/wh01s17/evo8-linux/main/src/evo8/data/evo8-mixer.svg" width="112" alt="Logo de evo8-linux: un 8 en píxeles con los colores de un medidor de nivel"></p>
 
-# evo8-linux
+<h1 align="center">evo8-linux</h1>
 
-<p>
+<p align="center">
 <a href="https://pypi.org/project/evo8-linux/"><img src="https://img.shields.io/pypi/v/evo8-linux?label=PyPI" alt="Versión en PyPI"></a>
 <a href="https://github.com/wh01s17/evo8-linux/actions/workflows/ci.yml"><img src="https://github.com/wh01s17/evo8-linux/actions/workflows/ci.yml/badge.svg" alt="Estado del CI"></a>
 <img src="https://img.shields.io/badge/licencia-MIT-blue" alt="Licencia MIT">
