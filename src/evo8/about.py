@@ -16,7 +16,7 @@ NAME = "evo8-linux"
 APP = "Mezclador EVO 8"
 DESCRIPTION = ("Control del Audient EVO 8 en Linux: mezcla de monitoreo interna, "
                "loop-back y preamps, un mezclador para PipeWire y un micrófono "
-               "virtual que junta tus entradas con el audio de otras apps.")
+               "virtual opcional que junta tus entradas con el audio de otras apps.")
 AUTHOR = "wh01s17"
 LICENSE = "MIT"
 REPO = "https://github.com/wh01s17/evo8-linux"
@@ -89,11 +89,15 @@ def install_kind(module_file: str = __file__) -> str:
 
 
 def pipewire_config() -> str:
-    """Where the Mezcla config PipeWire loads comes from (first one wins)."""
+    """Where the Mezcla config `pipewire -c` loads comes from (first one wins)."""
+    for label, base in _CONFIG_DIRS:
+        f = base / "evo8-mezcla.conf"
+        if f.exists():
+            return f"{tilde(f)} ({label})"
     for label, base in _CONFIG_DIRS:
         f = base / "pipewire.conf.d" / "20-mezcla.conf"
         if f.exists():
-            return f"{tilde(f)} ({label})"
+            return f"{tilde(f)} ({label}, instalación anterior)"
     return ""
 
 
@@ -124,7 +128,7 @@ def report(data: dict | None = None) -> str:
         f"{d['name']} {d['version']}",
         f"EVO 8: {'conectada, firmware ' + dev['firmware'] if dev['connected'] else 'no conectada'}",
         f"Instalación: {d['install']}",
-        f"Config de PipeWire: {d['pipewireConfig'] or 'no encontrada'}",
+        f"Config de la Mezcla: {d['pipewireConfig'] or 'no encontrada'}",
         f"Regla udev: {d['udevRule'] or 'no instalada'}",
         f"Sistema: {d['platform']}",
     ]

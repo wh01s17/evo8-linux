@@ -45,10 +45,11 @@ jobs:
           import glob, zipfile
           names = set(zipfile.ZipFile(glob.glob("dist/*.whl")[0]).namelist())
           need = ["evo8/data/evo8-mixer.svg",
-                  "evo8/data/pipewire/pipewire.conf.d/20-mezcla.conf",
+                  "evo8/data/pipewire/evo8-mezcla.conf",
                   "evo8/data/pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf",
                   "evo8/data/udev/70-audient-evo8.rules",
                   "evo8/data/systemd/evo8-restore.service",
+                  "evo8/data/systemd/evo8-mezcla.service",
                   "evo8/data/applications/evo8-mixer.desktop",
                   "evo8/gui/qml/Main.qml", "evo8/gui/qml/qmldir"]
           missing = [n for n in need if n not in names]
@@ -67,11 +68,13 @@ jobs:
         run: |
           export HOME=$(mktemp -d) XDG_CONFIG_HOME= XDG_DATA_HOME=
           /tmp/venv/bin/evoctl setup || true      # exits 1: no PipeWire on the runner
-          test -f "$HOME/.config/pipewire/pipewire.conf.d/20-mezcla.conf"
+          test -f "$HOME/.config/pipewire/evo8-mezcla.conf"
           grep -q "^ExecStart=/tmp/venv/bin/evoctl restore" "$HOME/.config/systemd/user/evo8-restore.service"
+          grep -q "^ExecStartPost=-/tmp/venv/bin/evoctl apply --wait" "$HOME/.config/systemd/user/evo8-mezcla.service"
           grep -q "^Exec=/tmp/venv/bin/evo8-mixer" "$HOME/.local/share/applications/evo8-mixer.desktop"
           /tmp/venv/bin/evoctl setup --remove
-          test ! -e "$HOME/.config/pipewire/pipewire.conf.d/20-mezcla.conf"
+          test ! -e "$HOME/.config/pipewire/evo8-mezcla.conf"
+          test ! -e "$HOME/.config/systemd/user/evo8-mezcla.service"
 
   package:
     name: Build the Arch package
@@ -113,7 +116,8 @@ jobs:
           python -c "import evo8.gui.app, evo8.usb, evo8.hw"
           test -f /usr/lib/python3*/site-packages/evo8/gui/qml/Main.qml
           grep -q '^ExecStart=/usr/bin/evoctl restore' /usr/lib/systemd/user/evo8-restore.service
-          test -f /usr/share/pipewire/pipewire.conf.d/20-mezcla.conf
+          test -f /usr/share/pipewire/evo8-mezcla.conf
+          grep -q '^ExecStartPost=-/usr/bin/evoctl apply --wait' /usr/lib/systemd/user/evo8-mezcla.service
           test -f /usr/lib/udev/rules.d/70-audient-evo8.rules
           test -f /usr/share/icons/hicolor/scalable/apps/evo8-mixer.svg
           test -f /usr/lib/python3*/site-packages/evo8/data/evo8-mixer.svg

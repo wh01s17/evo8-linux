@@ -1,4 +1,5 @@
 import array
+import json
 import math
 import tempfile
 import unittest
@@ -6,7 +7,7 @@ import wave
 from pathlib import Path
 from unittest import mock
 
-from evo8 import alsa, calibrate, pw, state
+from evo8 import alsa, calibrate, mix, monitor, pw, state
 
 PW_LINK_L = """\
 Mezcla:capture_MONO
@@ -39,10 +40,61 @@ class PwParsing(unittest.TestCase):
                              ["mezcla.entradas:input_AUX0"])
             self.assertEqual(pw.links_from("nope"), [])
 
+    def test_props_come_from_the_full_dump(self):
+        graph = {"params": ["mix:Gain 1", 2.0, "compL:Delay (s)", 0.04]}
+        full = json.dumps([{"id": 7, "info": {"params": {"Props": [{"volume": 1.0}]}}},
+                           {"id": 44, "info": {"params": {"Props": [{"volume": 1.0}, graph]}}}])
+        with mock.patch.object(pw, "run", return_value=full) as run:
+            self.assertEqual(pw.props_params(44)[1], graph)
+            self.assertEqual(run.call_args.args, ("pw-dump",))
+            self.assertEqual(pw.props_params(99), [])
+
     def test_force_quantum(self):
         out = "Found \"settings\" metadata 35\nupdate: id:0 key:'clock.force-quantum' value:'128' type:''\n"
         with mock.patch.object(pw, "run", return_value=out):
             self.assertEqual(pw.force_quantum(), 128)
+
+
+class MezclaSwitch(unittest.TestCase):
+    def status(self, unit_text: str, node: int | None = None) -> str:
+        with mock.patch.object(pw, "run", return_value=unit_text), \
+                mock.patch.object(pw, "node_id", return_value=node):
+            return mix.service_status()
+
+    def test_status(self):
+        self.assertEqual(self.status("LoadState=loaded\nActiveState=active\n", 52), "on")
+        self.assertEqual(self.status("LoadState=loaded\nActiveState=inactive\n"), "off")
+        self.assertEqual(self.status("LoadState=loaded\nActiveState=failed\n"), "failed")
+        self.assertEqual(self.status("LoadState=not-found\nActiveState=inactive\n"), "missing")
+        # Running, but not from the unit: an old always-on drop-in.
+        self.assertEqual(self.status("LoadState=loaded\nActiveState=inactive\n", 52), "legacy")
+        self.assertEqual(self.status("", 52), "legacy")         # no systemd at all
+
+    def test_switch(self):
+        calls = []
+        with mock.patch.object(pw, "run", side_effect=lambda *a, **k: calls.append(a) or ""), \
+                mock.patch.object(mix, "service_status", return_value="on"), \
+                mock.patch.object(monitor, "is_on", return_value=True), \
+                mock.patch.object(monitor, "turn_off") as monitor_off:
+            mix.set_enabled(False)
+            monitor_off.assert_called_once()
+            mix.set_enabled(True)
+        self.assertEqual(calls, [("systemctl", "--user", "disable", "--now", "evo8-mezcla.service"),
+                                 ("systemctl", "--user", "enable", "--now", "evo8-mezcla.service")])
+
+    def test_cannot_switch_an_old_install(self):
+        for status in ("legacy", "missing"):
+            with mock.patch.object(mix, "service_status", return_value=status), \
+                    mock.patch.object(pw, "run") as run:
+                with self.assertRaises(mix.MixError):
+                    mix.set_enabled(False)
+                run.assert_not_called()
+
+    def test_off_explains_itself(self):
+        with mock.patch.object(pw, "node_id", return_value=None), \
+                mock.patch.object(mix, "service_status", return_value="off"):
+            with self.assertRaisesRegex(mix.MixError, "evoctl mezcla on"):
+                mix.gains()
 
 
 class Preamp(unittest.TestCase):

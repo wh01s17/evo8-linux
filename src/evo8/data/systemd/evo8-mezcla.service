@@ -1,0 +1,19 @@
+[Unit]
+Description=Micrófono virtual Mezcla del Audient EVO 8 (evo8-linux)
+# A PipeWire client of its own, like PipeWire's filter-chain.service: it lives
+# and dies with the daemon, and starting or stopping it touches no other audio.
+After=pipewire.service pipewire-session-manager.service
+BindsTo=pipewire.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/pipewire -c evo8-mezcla.conf
+# The filter-chain starts from the config's values: put back the saved gains,
+# sync delay and listening level once its nodes exist. Never fatal.
+ExecStartPost=-%h/.local/bin/evoctl apply --wait
+Restart=on-failure
+Slice=session.slice
+
+[Install]
+# Enabled means "on": started with PipeWire, also after it restarts.
+WantedBy=pipewire.service

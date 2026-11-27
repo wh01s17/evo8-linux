@@ -1,12 +1,17 @@
 """`evoctl setup`: put the files a pip/pipx install cannot place.
 
-pip only installs Python code. The Mezcla needs a PipeWire drop-in, the
-"Restaurar al conectar" service needs a user unit, and the menu entry needs a
-.desktop file and an icon. All of those go under the user's home, so no root
+pip only installs Python code. The Mezcla (the optional virtual microphone)
+needs its PipeWire config and the user unit that runs it, the browsers' mic
+volume lock needs a pipewire-pulse drop-in, the "Restaurar al conectar"
+service needs a user unit, and the menu entry needs a .desktop file and an
+icon. All of those go under the user's home, so no root
 is needed. The udev rule (USB access without root) is the one thing that does
 need root: setup prints the exact command instead of running sudo itself.
 
-It never restarts PipeWire: the user may be in a call.
+It never restarts PipeWire: the user may be in a call. Nor does it switch the
+Mezcla on or off, with one exception: an install from before 0.3 loaded it
+from a pipewire.conf.d drop-in (always on). That file is removed and the unit
+enabled instead, so the Mezcla is still there once PipeWire restarts.
 """
 
 from __future__ import annotations
@@ -22,6 +27,8 @@ DATA = Path(__file__).with_name("data")
 UDEV_RULE = DATA / "udev" / "70-audient-evo8.rules"
 UDEV_DEST = Path("/etc/udev/rules.d/70-audient-evo8.rules")
 SYSTEM_PIPEWIRE = (Path("/usr/share/pipewire"), Path("/etc/pipewire"))
+SYSTEM_UNITS = Path("/usr/lib/systemd/user")
+MEZCLA_UNIT = "evo8-mezcla.service"
 TOOLS = {
     "pactl": "pactl (libpulse / pulseaudio-utils)",
     "pw-cli": "PipeWire (pipewire)",
@@ -34,6 +41,8 @@ TOOLS = {
     "amixer": "amixer (alsa-utils)",
 }
 FONT = "JetBrainsMono Nerd Font"
+# Before 0.3 the Mezcla was a drop-in of the daemon, always on.
+LEGACY_DROPIN = Path("pipewire") / "pipewire.conf.d" / "20-mezcla.conf"
 
 
 def _config_home() -> Path:
@@ -68,9 +77,9 @@ def _text(rel: str) -> str:
 def plan() -> list[Item]:
     cfg, share = _config_home(), _data_home()
     items: list[Item] = []
-    for rel, label in (("pipewire/pipewire.conf.d/20-mezcla.conf", "PipeWire: la Mezcla"),
+    for rel, label in (("pipewire/evo8-mezcla.conf", "Micrófono virtual: config de la Mezcla"),
                        ("pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf",
-                        "PipeWire: volumen fijo del micrófono en el navegador")):
+                        "Sonido del PC: volumen fijo del micrófono en el navegador")):
         dest = cfg / rel
         item = Item(label, dest, _text(rel))
         # A drop-in in ~/.config shadows the system one with the same name:
@@ -87,6 +96,15 @@ def plan() -> list[Item]:
         "%h/.local/bin/evoctl", bin_path("evoctl"))
     items.append(Item("Servicio: restaurar ajustes al conectar la EVO",
                       cfg / "systemd" / "user" / "evo8-restore.service", service))
+
+    unit = _text("systemd/evo8-mezcla.service").replace(
+        "%h/.local/bin/evoctl", bin_path("evoctl")).replace(
+        "/usr/bin/pipewire", shutil.which("pipewire") or "/usr/bin/pipewire")
+    item = Item("Micrófono virtual: servicio que la enciende y apaga",
+                cfg / "systemd" / "user" / MEZCLA_UNIT, unit)
+    if (SYSTEM_UNITS / MEZCLA_UNIT).exists():
+        item.note = f"ya lo instala el sistema ({SYSTEM_UNITS / MEZCLA_UNIT})"
+    items.append(item)
 
     desktop = _text("applications/evo8-mixer.desktop").replace(
         "Exec=evo8-mixer", "Exec=" + bin_path("evo8-mixer"))
@@ -127,8 +145,20 @@ def udev_installed() -> bool:
     return UDEV_DEST.exists() or Path("/usr/lib/udev/rules.d/70-audient-evo8.rules").exists()
 
 
+def legacy_dropin() -> Path | None:
+    """The old always-on drop-in this setup copied, if it is still there."""
+    path = _config_home() / LEGACY_DROPIN
+    return path if path.is_file() and not path.is_symlink() else None
+
+
 def install(dry_run: bool = False) -> list[str]:
     lines = []
+    legacy = legacy_dropin()
+    if legacy:
+        if not dry_run:
+            legacy.unlink()
+        lines.append(f"  {'quitar' if dry_run else 'quitado':<11}Mezcla de la instalación anterior "
+                     f"({legacy}): ahora es un servicio que se enciende y apaga")
     for it in plan():
         if it.note:
             lines.append(f"  {'omitido':<11}{it.label}: {it.note}")
@@ -145,11 +175,15 @@ def install(dry_run: bool = False) -> list[str]:
         lines.append(f"  {verb:<11}{it.label} → {it.dest}")
     if not dry_run:
         _refresh()
+        if legacy:      # it was always on: keep it on (it starts with PipeWire)
+            _systemctl("enable", MEZCLA_UNIT)
     return lines
 
 
 def remove(dry_run: bool = False) -> list[str]:
     lines = []
+    if not dry_run:
+        _systemctl("disable", "--now", MEZCLA_UNIT)
     for it in plan():
         if it.note or not it.dest.is_file() or it.dest.is_symlink():
             continue
@@ -161,6 +195,11 @@ def remove(dry_run: bool = False) -> list[str]:
     return lines
 
 
+def _systemctl(*args: str) -> None:
+    if shutil.which("systemctl"):
+        subprocess.run(["systemctl", "--user", *args], capture_output=True)
+
+
 def _refresh() -> None:
     """Let systemd and the menus see the new files; all optional."""
     for cmd in (["systemctl", "--user", "daemon-reload"],
@@ -170,12 +209,9 @@ def _refresh() -> None:
             subprocess.run(cmd, capture_output=True)
 
 
-def mezcla_loaded() -> bool | None:
-    """Whether PipeWire already runs the Mezcla; None when it cannot tell."""
-    if not shutil.which("pw-cli"):
-        return None
-    out = subprocess.run(["pw-cli", "ls", "Node"], capture_output=True, text=True).stdout
-    return "mezcla.suma" in out
+def mezcla_status() -> str:
+    from . import mix
+    return mix.service_status()
 
 
 def evo_profile_ok() -> bool | None:
@@ -201,15 +237,19 @@ def run(remove_files: bool = False, dry_run: bool = False) -> int:
         return 0
 
     print("Archivos de usuario:" + (" (simulación)" if dry_run else ""))
+    migrated = legacy_dropin() is not None
     lines = install(dry_run)
     print("\n".join(lines))
-    pipewire_changed = any(line.split()[0] in ("instalado", "actualizado", "instalar", "actualizar")
-                           and "PipeWire" in line for line in lines)
+    pulse_changed = any(line.split()[0] in ("instalado", "actualizado", "instalar", "actualizar")
+                        and "navegador" in line for line in lines)
+    status = "legacy" if dry_run and migrated else mezcla_status()
     steps = []
     if not udev_installed():
         steps.append("Permitir el control por USB sin root (pide tu contraseña):\n    " + udev_command())
-    if pipewire_changed or mezcla_loaded() is False:
-        steps.append("Reiniciar PipeWire para cargar la Mezcla (corta el audio un momento: no lo hagas mientras grabas o transmites):\n"
+    if status == "legacy" or pulse_changed:
+        why = ("quitar la Mezcla vieja de PipeWire; vuelve sola como servicio" if status == "legacy"
+               else "cargar el volumen fijo del micrófono en el navegador")
+        steps.append(f"Reiniciar PipeWire para {why} (corta el audio un momento: no lo hagas mientras grabas o transmites):\n"
                      "    systemctl --user restart pipewire pipewire-pulse wireplumber")
     if evo_profile_ok() is False:
         steps.append("Poner la EVO 8 en el perfil Pro Audio:\n"
@@ -220,6 +260,9 @@ def run(remove_files: bool = False, dry_run: bool = False) -> int:
             print(f"  {i}. {s}")
     else:
         print("\nTodo listo. Abre el mezclador con evo8-mixer o desde el menú de aplicaciones.")
+    if status in ("off", "missing") and not migrated:
+        print("\nEl micrófono virtual (la Mezcla) está apagado. Para usarlo: evoctl mezcla on,\n"
+              "o el interruptor de la pestaña MICRÓFONO VIRTUAL.")
     problems = checks()
     if problems:
         print("\nRevisa:")

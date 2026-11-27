@@ -26,6 +26,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--version", action="version", version=f"evo8-linux {about.version()}")
     sub = p.add_subparsers(dest="cmd", required=True)
 
+    mz = sub.add_parser("mezcla", help="encender o apagar el micrófono virtual (la Mezcla y Compartido)")
+    mzs = mz.add_subparsers(dest="action", required=True)
+    mzs.add_parser("status", help="on, off, failed, missing (sin instalar) o legacy (instalación anterior)")
+    for name, text in (("on", "encender (queda encendida al reiniciar)"), ("off", "apagar"),
+                       ("toggle", "cambiar")):
+        mzs.add_parser(name, help=text)
+
     m = sub.add_parser("mix", help="ganancias de la Mezcla (1-2 entradas, 3-4 Compartido L/R)")
     ms = m.add_subparsers(dest="action", required=True)
     ms.add_parser("get", help="las cuatro ganancias, en JSON")
@@ -42,7 +49,8 @@ def build_parser() -> argparse.ArgumentParser:
     l = sub.add_parser("listen", help="nivel de escucha de Compartido")
     l.add_subparsers(dest="action", required=True).add_parser("save", help="guardar el nivel actual")
 
-    sub.add_parser("apply", help="restaurar lo guardado: ganancias, retardo, escucha y preamps")
+    ap = sub.add_parser("apply", help="restaurar lo guardado: ganancias, retardo, escucha y preamps")
+    ap.add_argument("--wait", action="store_true", help="esperar a que aparezca la Mezcla (recién encendida)")
     sub.add_parser("restore", help="al conectar la EVO: preamps, mezcla interna y loop-back guardados")
 
     mo = sub.add_parser("monitor", help="escuchar la Mezcla o entradas sueltas por la salida")
@@ -119,7 +127,13 @@ def _dispatch(a) -> int:
     if a.cmd == "setup":
         from . import user_setup
         return user_setup.run(remove_files=a.remove, dry_run=a.dry_run)
-    if a.cmd == "mix":
+    if a.cmd == "mezcla":
+        if a.action == "status":
+            print(mix.service_status())
+        else:
+            on = {"on": True, "off": False}.get(a.action, mix.service_status() != "on")
+            mix.set_enabled(on)
+    elif a.cmd == "mix":
         if a.action == "get":
             _json(mix.gains())
         else:
@@ -132,6 +146,8 @@ def _dispatch(a) -> int:
     elif a.cmd == "listen":
         mix.save_listen_level()
     elif a.cmd == "apply":
+        if a.wait:
+            mix.wait_ready()
         mix.apply()
         alsa.restore_preamp()
     elif a.cmd == "restore":

@@ -1,17 +1,23 @@
 post_install() {
   cat <<'EOF'
 ==> evo8-linux:
-    1. Reinicia PipeWire para cargar la Mezcla:
-         systemctl --user restart pipewire pipewire-pulse wireplumber
-    2. Pon la EVO 8 en el perfil Pro Audio:
+    1. Pon la EVO 8 en el perfil Pro Audio:
          evoctl profiles set alsa_card.usb-Audient_EVO8-00 pro-audio
-    3. Desconecta y vuelve a conectar la EVO para que tome la regla udev
+    2. Desconecta y vuelve a conectar la EVO para que tome la regla udev
        (control USB sin root y restauración de ajustes al conectarla).
-    Para usar el micrófono virtual, elige "Mezcla" como micrófono en la app.
+    El micrófono virtual (la Mezcla) viene apagado. Para usarlo:
+         evoctl mezcla on      (o el interruptor de la pestaña MICRÓFONO VIRTUAL)
+    y elige "Mezcla" como micrófono en la app.
 EOF
 }
 
 post_upgrade() {
-  echo "==> evo8-linux: reinicia PipeWire si cambió la Mezcla:"
-  echo "      systemctl --user restart pipewire pipewire-pulse wireplumber"
+  cat <<'EOF'
+==> evo8-linux: si cambió la Mezcla, apágala y enciéndela para cargarla:
+         evoctl mezcla off && evoctl mezcla on
+    Si vienes de una versión anterior a la 0.3 (la Mezcla no se podía apagar),
+    reinicia PipeWire una vez y enciéndela si la usas:
+         systemctl --user restart pipewire pipewire-pulse wireplumber
+         evoctl mezcla on
+EOF
 }

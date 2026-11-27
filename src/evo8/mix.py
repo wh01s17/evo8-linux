@@ -1,4 +1,8 @@
-"""The Mezcla virtual microphone (evo8/data/pipewire/pipewire.conf.d/20-mezcla.conf).
+"""The Mezcla virtual microphone (evo8/data/pipewire/evo8-mezcla.conf).
+
+It is optional and runs as a PipeWire client of its own, the user unit
+evo8-mezcla.service: enabled means on (it starts with PipeWire), disabled
+means none of its nodes exist. Switching it touches no other audio.
 
 mezcla.suma is a filter-chain summing four channels into Mezcla:
   mix:Gain 1 = interface input 1, mix:Gain 2 = input 2,
@@ -13,6 +17,8 @@ monitor left behind never comes back.
 
 from __future__ import annotations
 
+import time
+
 from . import pw, state
 
 SUM_NODE = "mezcla.suma"
@@ -22,6 +28,10 @@ MIX_SOURCE = "Mezcla"
 DEFAULT_GAINS = [1.0, 1.0, 0.5, 0.5]
 MAX_GAIN = 4.0
 MAX_DELAY_MS = 500
+SERVICE = "evo8-mezcla.service"
+LEGACY_TEXT = ("la Mezcla de una instalación anterior sigue cargada dentro de PipeWire y no se "
+               "puede apagar: si instalaste con pipx corre «evoctl setup»; después reinicia "
+               "PipeWire (systemctl --user restart pipewire pipewire-pulse wireplumber)")
 
 
 class MixError(RuntimeError):
@@ -31,8 +41,56 @@ class MixError(RuntimeError):
 def _sum_id() -> int:
     nid = pw.node_id(SUM_NODE)
     if nid is None:
-        raise MixError(f"node {SUM_NODE} not found")
+        raise MixError("la Mezcla está apagada (evoctl mezcla on)"
+                       if service_status() == "off" else f"node {SUM_NODE} not found")
     return nid
+
+
+# ---- on / off ----
+
+def _unit() -> dict[str, str]:
+    out = pw.run("systemctl", "--user", "show", SERVICE, "-p", "LoadState", "-p", "ActiveState",
+                 timeout=3)
+    return dict(line.split("=", 1) for line in out.splitlines() if "=" in line)
+
+
+def service_status() -> str:
+    """"on", "off", "failed", "missing" (no unit installed) or "legacy" (the
+    Mezcla runs inside PipeWire from an old drop-in, so it cannot be switched)."""
+    unit = _unit()
+    if unit.get("ActiveState") in ("active", "activating", "reloading"):
+        return "on"
+    if pw.node_id(SUM_NODE) is not None:
+        return "legacy"
+    if unit.get("LoadState") != "loaded":
+        return "missing"
+    return "failed" if unit.get("ActiveState") == "failed" else "off"
+
+
+def set_enabled(on: bool) -> None:
+    """Turn the Mezcla on (and keep it on across restarts) or off."""
+    status = service_status()
+    if status == "legacy":
+        raise MixError(LEGACY_TEXT)
+    if status == "missing":
+        raise MixError(f"falta {SERVICE}: corre «evoctl setup»")
+    if not on:
+        from . import monitor
+        if monitor.is_on():         # undo its mute and quantum before the nodes go
+            monitor.turn_off()
+    # The unit's ExecStartPost restores the saved values before this returns.
+    pw.run("systemctl", "--user", "enable" if on else "disable", "--now", SERVICE,
+           timeout=15, check=True)
+
+
+def wait_ready(timeout: float = 10) -> bool:
+    """Wait for the sum node to appear (the unit was just started)."""
+    end = time.monotonic() + timeout
+    while pw.node_id(SUM_NODE) is None:
+        if time.monotonic() > end:
+            return False
+        time.sleep(0.2)
+    return True
 
 
 def _graph_params(nid: int) -> dict[str, float]:
@@ -61,7 +119,7 @@ def set_gain(n: int, gain: float) -> None:
 def delay_ms() -> int:
     p = _graph_params(_sum_id())
     if "compL:Delay (s)" not in p:
-        raise MixError(f"no sync delay in {SUM_NODE} (20-mezcla.conf without compL/compR?)")
+        raise MixError(f"no sync delay in {SUM_NODE} (evo8-mezcla.conf without compL/compR?)")
     return round(float(p["compL:Delay (s)"]) * 1000)
 
 

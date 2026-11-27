@@ -5,8 +5,8 @@ REPO        := $(abspath .)
 .PHONY: install uninstall udev test
 
 # Development install: the launcher runs the package straight from this
-# checkout, and the PipeWire config is linked, so edits apply without
-# reinstalling.
+# checkout, and the PipeWire configs are linked, so edits apply without
+# reinstalling (the Mezcla's after `evoctl mezcla off` and `on`).
 # A config dir that is itself a symlink (stow folds whole directories) is
 # unfolded into a real directory of per-file links first, so our links never
 # land inside someone else's tree.
@@ -22,19 +22,25 @@ install:
 	chmod +x $(PREFIX)/bin/evoctl $(PREFIX)/bin/evo8-mixer
 	@$(call UNFOLD,$(CONFIG)/systemd/user)
 	install -m 644 src/evo8/data/systemd/evo8-restore.service $(CONFIG)/systemd/user/evo8-restore.service
+	install -m 644 src/evo8/data/systemd/evo8-mezcla.service $(CONFIG)/systemd/user/evo8-mezcla.service
 	-systemctl --user daemon-reload
 	install -d $(PREFIX)/share/applications
 	install -m 644 src/evo8/data/applications/evo8-mixer.desktop $(PREFIX)/share/applications/evo8-mixer.desktop
 	install -Dm644 src/evo8/data/evo8-mixer.svg $(PREFIX)/share/icons/hicolor/scalable/apps/evo8-mixer.svg
 	-gtk-update-icon-cache -q $(PREFIX)/share/icons/hicolor 2>/dev/null
-	ln -sfn $(REPO)/src/evo8/data/pipewire/pipewire.conf.d/20-mezcla.conf $(CONFIG)/pipewire/pipewire.conf.d/20-mezcla.conf
+	@# Before 0.3 the Mezcla was a daemon drop-in (always on); now it is a unit.
+	@if [ -L $(CONFIG)/pipewire/pipewire.conf.d/20-mezcla.conf ]; then \
+		rm $(CONFIG)/pipewire/pipewire.conf.d/20-mezcla.conf; systemctl --user enable evo8-mezcla.service; \
+		echo "Mezcla vieja quitada: reinicia PipeWire (systemctl --user restart pipewire pipewire-pulse wireplumber)"; fi
+	ln -sfn $(REPO)/src/evo8/data/pipewire/evo8-mezcla.conf $(CONFIG)/pipewire/evo8-mezcla.conf
 	ln -sfn $(REPO)/src/evo8/data/pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf $(CONFIG)/pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf
 
 uninstall:
+	-systemctl --user disable --now evo8-mezcla.service
 	rm -f $(PREFIX)/bin/evoctl $(PREFIX)/bin/evo8-mixer $(PREFIX)/share/applications/evo8-mixer.desktop
 	rm -f $(PREFIX)/share/icons/hicolor/scalable/apps/evo8-mixer.svg
-	rm -f $(CONFIG)/systemd/user/evo8-restore.service
-	rm -f $(CONFIG)/pipewire/pipewire.conf.d/20-mezcla.conf
+	rm -f $(CONFIG)/systemd/user/evo8-restore.service $(CONFIG)/systemd/user/evo8-mezcla.service
+	rm -f $(CONFIG)/pipewire/evo8-mezcla.conf
 	rm -f $(CONFIG)/pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf
 
 udev:

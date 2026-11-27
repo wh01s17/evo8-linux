@@ -3,7 +3,7 @@ pkgname=evo8-linux-git
 _name=evo8-linux
 pkgver=r0
 pkgrel=1
-pkgdesc="Control del Audient EVO 8 en Linux: mezcla de monitoreo interna, loop-back, preamps, mezclador para PipeWire y micrófono virtual"
+pkgdesc="Control del Audient EVO 8 en Linux: mezcla de monitoreo interna, loop-back, preamps, mezclador para PipeWire y micrófono virtual opcional"
 arch=('any')
 url="https://github.com/wh01s17/evo8-linux"
 license=('MIT')
@@ -46,16 +46,18 @@ package() {
   cd "$_name"
   python -m installer --destdir="$pkgdir" dist/*.whl
 
-  # PipeWire reads drop-ins from /usr/share; a file with the same name in
-  # ~/.config/pipewire overrides it.
-  install -Dm644 src/evo8/data/pipewire/pipewire.conf.d/20-mezcla.conf \
-    "$pkgdir/usr/share/pipewire/pipewire.conf.d/20-mezcla.conf"
+  # PipeWire looks for configs in /usr/share; a file with the same name in
+  # ~/.config/pipewire overrides it. The Mezcla is a config of its own, run by
+  # evo8-mezcla.service (`pipewire -c evo8-mezcla.conf`) only while it is on.
+  install -Dm644 src/evo8/data/pipewire/evo8-mezcla.conf "$pkgdir/usr/share/pipewire/evo8-mezcla.conf"
   install -Dm644 src/evo8/data/pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf \
     "$pkgdir/usr/share/pipewire/pipewire-pulse.conf.d/20-bloquear-volumen-micro.conf"
 
   install -Dm644 src/evo8/data/udev/70-audient-evo8.rules "$pkgdir/usr/lib/udev/rules.d/70-audient-evo8.rules"
   install -Dm644 src/evo8/data/systemd/evo8-restore.service "$pkgdir/usr/lib/systemd/user/evo8-restore.service"
-  sed -i 's|%h/.local/bin/evoctl|/usr/bin/evoctl|' "$pkgdir/usr/lib/systemd/user/evo8-restore.service"
+  install -Dm644 src/evo8/data/systemd/evo8-mezcla.service "$pkgdir/usr/lib/systemd/user/evo8-mezcla.service"
+  sed -i 's|%h/.local/bin/evoctl|/usr/bin/evoctl|' "$pkgdir/usr/lib/systemd/user/evo8-restore.service" \
+    "$pkgdir/usr/lib/systemd/user/evo8-mezcla.service"
   install -Dm644 src/evo8/data/applications/evo8-mixer.desktop "$pkgdir/usr/share/applications/evo8-mixer.desktop"
   install -Dm644 src/evo8/data/evo8-mixer.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/evo8-mixer.svg"
 

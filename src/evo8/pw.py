@@ -49,10 +49,13 @@ def node_id(name: str) -> int | None:
 
 
 def props_params(object_id: int) -> list[dict]:
-    objs = dump(object_id)
-    if not objs:
-        return []
-    return objs[0].get("info", {}).get("params", {}).get("Props", []) or []
+    """Every Props entry of a node. Read from the full dump: `pw-dump <id>`
+    returns before a node run by another client (the Mezcla's own process)
+    has sent all its entries, and misses the filter-graph's one."""
+    for obj in dump():
+        if obj.get("id") == object_id:
+            return obj.get("info", {}).get("params", {}).get("Props", []) or []
+    return []
 
 
 def set_props(object_id: int, spa_pod: str) -> bool:
