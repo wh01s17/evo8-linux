@@ -8,6 +8,15 @@ Cómo publicar una versión: [`PUBLISH.md`](https://github.com/wh01s17/evo8-linu
 
 ## [Sin publicar]
 
+### Documentación
+
+- README reordenado como la ventana (sonido del PC, micrófono virtual,
+  hardware), sin la tabla que repetía el índice y sin describir dos veces las
+  pestañas. Corrige que el preamp cortara el audio (va por ALSA, sin cortes)
+  y suma los controles de la 0.5: escribir el PRE y doble clic.
+- El diagrama muestra las entradas 1-4 a elección y el preamp en ALSA, no
+  en el USB.
+
 ## [0.5.0] - 2026-11-27
 
 ### Cambiado
