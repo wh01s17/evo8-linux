@@ -8,6 +8,22 @@ Cómo publicar una versión: [`PUBLISH.md`](https://github.com/wh01s17/evo8-linu
 
 ## [Sin publicar]
 
+## [0.5.0] - 2026-11-27
+
+### Cambiado
+
+- En SONIDO DEL PC, el globo del fader de cada entrada aclara que ese
+  volumen vale para todo el sistema: la Mezcla, el monitor y cualquier app
+  que grabe de la EVO.
+
+### Agregado
+
+- PRE: un clic en el valor en dB permite escribirlo. Se ajusta al rango del
+  preamp de la EVO (−8 a +50 dB) y a pasos de 0,5 dB. Enter o un clic
+  afuera aplican; Esc cancela.
+- Doble clic en cualquier fader o control deslizante lo devuelve a su valor
+  estándar, igual que 󰑐: volumen al 100 %, preamp a 0 dB, paneo al centro…
+
 ## [0.4.0] - 2026-11-27
 
 ### Cambiado
@@ -149,7 +165,8 @@ Primera versión publicada.
 - CI en GitHub Actions: tests en Arch, paquete de Arch con `namcap` y el wheel
   instalado y probado en Ubuntu con Python 3.11 y 3.13.
 
-[Sin publicar]: https://github.com/wh01s17/evo8-linux/compare/v0.4.0...HEAD
+[Sin publicar]: https://github.com/wh01s17/evo8-linux/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/wh01s17/evo8-linux/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/wh01s17/evo8-linux/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/wh01s17/evo8-linux/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/wh01s17/evo8-linux/compare/v0.1.1...v0.2.0
