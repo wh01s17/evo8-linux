@@ -25,7 +25,7 @@ Son tres partes separadas, cada una con su pestaña en la ventana:
 | [El sonido del PC](#el-sonido-del-pc) | SONIDO DEL PC | Volúmenes y dispositivos del sistema (PipeWire) |
 | [El micrófono virtual](#el-micrófono-virtual-opcional) | MICRÓFONO VIRTUAL | Un dispositivo virtual que se enciende y se apaga |
 
-![La pestaña CONSOLA del mezclador: entradas, Compartido, la Mezcla, la salida y los perfiles de cada tarjeta](https://raw.githubusercontent.com/wh01s17/evo8-linux/main/docs/img/consola.png)
+![La pestaña SONIDO DEL PC: las cuatro entradas de la EVO con preamp, volumen, medidor y monitor, las apps, la salida seleccionada por pares de canales y los perfiles de cada tarjeta](https://raw.githubusercontent.com/wh01s17/evo8-linux/main/docs/img/sonido.png)
 
 ## Índice
 
@@ -94,6 +94,8 @@ Apagado no existe: no aparece en las apps y el resto del sonido no cambia.
   un click y lo compensa retrasando la música solo hacia la Mezcla.
 - **Monitor de la Mezcla**: escuchar el micrófono completo, tal como lo
   reciben las apps.
+
+![La pestaña MICRÓFONO VIRTUAL encendida: el interruptor arriba, cuánto entra de las entradas 1-2 y de Compartido, el retardo de sincronía con Calibrar, las apps que se pueden mandar a Compartido y la Mezcla con su monitor](https://raw.githubusercontent.com/wh01s17/evo8-linux/main/docs/img/mezcla.png)
 
 ## Instalación
 
