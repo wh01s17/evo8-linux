@@ -39,6 +39,8 @@ Item {
     property string valueText: ""
     property real meterLeft: -1
     property real meterRight: -1
+    property bool clipped: false           // a meter reached 0 dBFS (latched)
+    signal clipCleared()
     property bool muted: false
     property bool showMute: true
     property bool shareVisible: false
@@ -365,8 +367,42 @@ Item {
                 height: parent.height
                 spacing: 4
 
-                VMeter { visible: strip.meterLeft >= 0; height: parent.height; level: strip.meterLeft }
-                VMeter { visible: strip.meterRight >= 0; height: parent.height; level: strip.meterRight }
+                // Meters with a clip light on top: it lights when a sample
+                // reaches 0 dBFS and stays lit until clicked.
+                Column {
+                    visible: strip.meterLeft >= 0
+                    height: parent.height
+                    spacing: 4
+                    Rectangle {
+                        objectName: "clipLight"
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: Math.max(meterRow.width, 12)
+                        height: 8
+                        radius: 1
+                        color: strip.clipped ? Theme.urgent : Theme.alpha(Theme.urgent, 0.15)
+                        MouseArea {
+                            id: clipMouse
+                            anchors.fill: parent
+                            anchors.margins: -4
+                            hoverEnabled: true
+                            cursorShape: strip.clipped ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            onClicked: if (strip.clipped) strip.clipCleared()
+                        }
+                        Tip {
+                            visible: clipMouse.containsMouse
+                            text: strip.clipped ? "Saturó: llegó a 0 dBFS. Clic para apagar"
+                                                : "Se enciende si la señal llega a 0 dBFS (saturación)"
+                        }
+                    }
+                    Row {
+                        id: meterRow
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        height: parent.height - 12
+                        spacing: 4
+                        VMeter { height: parent.height; level: strip.meterLeft }
+                        VMeter { visible: strip.meterRight >= 0; height: parent.height; level: strip.meterRight }
+                    }
+                }
                 Item { visible: strip.meterLeft >= 0; width: 8; height: 1 }
 
                 Item {

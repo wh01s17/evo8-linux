@@ -21,6 +21,11 @@ ScrollView {
     readonly property real standardPreamp: 0
     readonly property real standardVolume: 1
 
+    function clip(name, ch) {
+        var c = mixer.clips ? mixer.clips[name] : null
+        return !!(c && c[ch])
+    }
+
     function peak(name, ch) {
         var p = meters ? meters[name] : null
         return p && ch < p.length ? p[ch] : 0
@@ -103,6 +108,8 @@ ScrollView {
                         value: hasChannel ? page.source.volumes[index] : 0
                         valueText: hasChannel ? F.percent(value) : "—"
                         meterLeft: hasChannel ? F.meterLevel(page.peak("entradas", index)) : -1
+                        clipped: page.clip("entradas", index)
+                        onClipCleared: mixer.clearClip("entradas", index)
                         muted: !!page.source && page.source.mute
                         // The system mutes the whole source, like the output: one button.
                         showMute: index === 0 && !!page.source

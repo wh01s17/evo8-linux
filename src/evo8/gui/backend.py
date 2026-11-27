@@ -25,7 +25,7 @@ from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 
 from .. import about, alsa, calibrate, hw, mix, monitor, profiles, pw, state
 from . import snapshot
-from .meters import Meters
+from .meters import Meters, latch_clips
 
 HOLD_S = 1.5
 FAST_MS = 1000
@@ -83,6 +83,7 @@ class Backend(QObject):
     modelChanged = Signal()
     metersChanged = Signal()
     hwChanged = Signal()
+    clipsChanged = Signal()
     aboutChanged = Signal()
     _done = Signal(str, "QVariant", "QVariant")
 
@@ -104,6 +105,7 @@ class Backend(QObject):
             "busy": False, "message": "",
         }
         self._meters_view: dict = {}
+        self._clips: dict[str, list[bool]] = {}
         self._about: dict = {}
         self.refreshAbout()
         self._hold: dict[str, float] = {}
@@ -142,7 +144,12 @@ class Backend(QObject):
     def _get_hw(self):
         return self._hw
 
+    def _get_clips(self):
+        return self._clips
+
     model = Property("QVariant", _get_model, notify=modelChanged)
+    # Per meter, per channel: reached 0 dBFS since last cleared.
+    clips = Property("QVariant", _get_clips, notify=clipsChanged)
     meters = Property("QVariant", _get_meters, notify=metersChanged)
     hardware = Property("QVariant", _get_hw, notify=hwChanged)
 
@@ -530,8 +537,20 @@ class Backend(QObject):
                      message=ok_text)
 
     # ---- meters ----
+    @Slot(str, int)
+    def clearClip(self, name: str, channel: int) -> None:
+        lit = list(self._clips.get(name) or [])
+        if 0 <= channel < len(lit) and lit[channel]:
+            lit[channel] = False
+            self._clips = dict(self._clips, **{name: lit})
+            self.clipsChanged.emit()
+
     def _update_meters(self) -> None:
         levels = self._meters.levels()
+        clips = latch_clips(self._clips, levels)
+        if clips is not None:
+            self._clips = clips
+            self.clipsChanged.emit()
         view = dict(self._meters_view)
         for name, peaks in levels.items():
             prev = view.get(name) or [0.0] * len(peaks)

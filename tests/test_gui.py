@@ -2,6 +2,7 @@ import unittest
 
 from evo8 import profiles
 from evo8.gui import snapshot
+from evo8.gui.meters import CLIP_PEAK, latch_clips
 
 
 def vol(*values):
@@ -60,6 +61,23 @@ class Snapshot(unittest.TestCase):
     def test_raw(self):
         self.assertEqual(snapshot.raw(0.5), "32768")
         self.assertEqual(snapshot.raw(-1), "0")
+
+
+class ClipLights(unittest.TestCase):
+    def test_light_up_and_stay_lit(self):
+        clips = latch_clips({}, {"mezcla": [0.5]})
+        self.assertEqual(clips, {"mezcla": [False]})
+        clips = latch_clips(clips, {"mezcla": [1.3]})         # past 0 dBFS (float)
+        self.assertEqual(clips, {"mezcla": [True]})
+        self.assertIsNone(latch_clips(clips, {"mezcla": [0.1]}))   # stays lit: no change
+
+    def test_per_channel_and_at_the_threshold(self):
+        clips = latch_clips({}, {"suma": [0.2, CLIP_PEAK, 0.99, 0]})
+        self.assertEqual(clips["suma"], [False, True, False, False])
+
+    def test_a_meter_that_read_nothing_keeps_its_lights(self):
+        clips = latch_clips({"entradas": [True]}, {"mezcla": [0.0]})
+        self.assertEqual(clips, {"entradas": [True], "mezcla": [False]})
 
 
 def prof(name, desc, sinks, sources):

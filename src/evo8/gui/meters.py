@@ -18,6 +18,27 @@ import threading
 
 RATE = 48000
 CHUNK_FRAMES = 480          # 10 ms
+# A sample at or above this is clipping: 0 dBFS within float rounding
+# (-0.01 dBFS). Float paths (a source volume above 100 %, the Mezcla's
+# gains) can go past 1.0, which clips wherever the audio becomes integers.
+CLIP_PEAK = 0.999
+
+
+def latch_clips(clips: dict[str, list[bool]], levels: dict[str, list[float]]) -> dict[str, list[bool]] | None:
+    """Clip lights after one read of peaks: a channel that reached CLIP_PEAK
+    lights up and stays lit (until cleared). The new state, or None when
+    nothing changed."""
+    new = {}
+    changed = False
+    for name, peaks in levels.items():
+        before = clips.get(name) or []
+        lit = [p >= CLIP_PEAK or (i < len(before) and before[i]) for i, p in enumerate(peaks)]
+        if lit != before:
+            changed = True
+        new[name] = lit
+    for name, lit in clips.items():
+        new.setdefault(name, lit)
+    return new if changed else None
 
 
 class Reader:
