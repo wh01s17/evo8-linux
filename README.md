@@ -45,7 +45,8 @@ tres partes tiene su pestaña en la ventana.
 ### El sonido del PC
 
 Pestaña **SONIDO DEL PC**. Un mezclador para el audio del sistema, con una
-tira por canal. Funciona igual con el micrófono virtual encendido o apagado.
+tira por canal. No necesita el micrófono virtual: funciona aunque esté
+apagado.
 
 - **Entradas de la EVO**: preamp en dB, volumen en el sistema, medidor y
   monitor (escuchar la entrada por la salida seleccionada, con latencia baja).
