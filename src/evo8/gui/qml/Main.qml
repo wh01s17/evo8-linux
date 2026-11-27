@@ -5,7 +5,7 @@ import "."
 
 ApplicationWindow {
     id: window
-    title: "Mezclador"
+    title: "Mezclador EVO 8"
     width: 1640
     height: 640
     minimumWidth: 720
@@ -62,9 +62,10 @@ ApplicationWindow {
         anchors.margins: 18
         spacing: 14
 
+        // First line: the app's name and version, plus notices.
         RowLayout {
             Layout.fillWidth: true
-            spacing: 28
+            spacing: 10
             Image {
                 source: "../../data/evo8-mixer.svg"
                 Layout.preferredWidth: 22
@@ -73,17 +74,20 @@ ApplicationWindow {
                 smooth: true
             }
             Text {
-                Layout.leftMargin: -18
-                text: "Mezclador"
+                text: "Mezclador EVO 8"
                 color: Theme.foreground
                 font.family: Theme.font
                 font.pixelSize: Theme.title
                 font.bold: true
             }
-            Tab { index: 0; text: "SONIDO DEL PC" }
-            Tab { index: 1; text: "MICRÓFONO VIRTUAL"; lit: window.mezclaOn }
-            Tab { index: 2; text: "EVO 8" }
-            Tab { index: 3; text: "ACERCA DE" }
+            Text {
+                Layout.alignment: Qt.AlignBaseline
+                text: mixer.about.version ? "v" + mixer.about.version : ""
+                color: Theme.accent
+                font.family: Theme.font
+                font.pixelSize: Theme.caption
+                font.bold: true
+            }
             Item { Layout.fillWidth: true }
             Text {
                 text: window.m.notice || ""
@@ -103,6 +107,17 @@ ApplicationWindow {
                 elide: Text.ElideLeft
                 Layout.maximumWidth: 600
             }
+        }
+
+        // Second line: the tabs.
+        Row {
+            Layout.fillWidth: true
+            Layout.bottomMargin: 4
+            spacing: 28
+            Tab { index: 0; text: "SONIDO DEL PC" }
+            Tab { index: 1; text: "MICRÓFONO VIRTUAL"; lit: window.mezclaOn }
+            Tab { index: 2; text: "EVO 8" }
+            Tab { index: 3; text: "ACERCA DE" }
         }
 
         // Give the scroll views the available space directly. Their content

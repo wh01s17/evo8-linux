@@ -8,6 +8,15 @@ Cómo publicar una versión: [`PUBLISH.md`](https://github.com/wh01s17/evo8-linu
 
 ## [Sin publicar]
 
+### Cambiado
+
+- Arriba de la ventana dice «Mezclador EVO 8» con la versión de la app, y
+  las pestañas quedan en una línea propia, debajo.
+
+### Documentación
+
+- README: capturas nuevas de SONIDO DEL PC, MICRÓFONO VIRTUAL y EVO 8.
+
 ## [0.3.0] - 2026-11-27
 
 ### Cambiado
