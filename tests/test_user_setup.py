@@ -37,7 +37,7 @@ class UserSetup(unittest.TestCase):
         self.assertRegex(service, r"ExecStart=\S*evoctl restore")
         unit = (self.cfg / "systemd/user/evo8-mezcla.service").read_text()
         self.assertRegex(unit, r"ExecStart=\S*pipewire -c evo8-mezcla.conf")
-        self.assertRegex(unit, r"ExecStartPost=-/\S*evoctl apply --wait")
+        self.assertRegex(unit, r"ExecStartPost=-\S*evoctl apply --wait")
         self.assertIn("WantedBy=pipewire.service", unit)
         # A fresh install never switches the Mezcla on.
         user_setup._systemctl.assert_not_called()
