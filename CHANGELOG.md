@@ -8,10 +8,24 @@ Cómo publicar una versión: [`PUBLISH.md`](https://github.com/wh01s17/evo8-linu
 
 ## [Sin publicar]
 
+## [0.4.0] - 2026-11-27
+
 ### Cambiado
 
 - Arriba de la ventana dice «Mezclador EVO 8» con la versión de la app, y
   las pestañas quedan en una línea propia, debajo.
+
+### Agregado
+
+- El micrófono virtual puede usar cualquiera de las 4 entradas de la EVO, no
+  solo la 1 y la 2. En MICRÓFONO VIRTUAL, **+** agrega una entrada y ✕ la
+  quita; también `evoctl mezcla add|remove N` y `evoctl mezcla inputs`. Es
+  instantáneo y no corta el micrófono. Al volver, una entrada recupera su
+  nivel. Empieza con las entradas 1 y 2, como antes.
+- `evoctl mix get` devuelve 6 ganancias: las 4 de siempre y al final las de
+  las entradas 3 y 4 (`mix set 5|6`).
+- Tras actualizar, apaga y enciende la Mezcla una vez para cargar su config
+  nueva: `evoctl mezcla off && evoctl mezcla on`.
 
 ### Documentación
 
@@ -135,7 +149,8 @@ Primera versión publicada.
 - CI en GitHub Actions: tests en Arch, paquete de Arch con `namcap` y el wheel
   instalado y probado en Ubuntu con Python 3.11 y 3.13.
 
-[Sin publicar]: https://github.com/wh01s17/evo8-linux/compare/v0.3.0...HEAD
+[Sin publicar]: https://github.com/wh01s17/evo8-linux/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/wh01s17/evo8-linux/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/wh01s17/evo8-linux/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/wh01s17/evo8-linux/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/wh01s17/evo8-linux/compare/v0.1.0...v0.1.1
