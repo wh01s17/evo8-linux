@@ -8,6 +8,32 @@ Cómo publicar una versión: [`PUBLISH.md`](https://github.com/wh01s17/evo8-linu
 
 ## [Sin publicar]
 
+### Cambiado
+
+- La ventana separa las tres partes del proyecto en pestañas: **SONIDO DEL
+  PC** (entradas, apps, salida y perfiles), **MICRÓFONO VIRTUAL** (la Mezcla,
+  Compartido, la sincronía y qué apps van a Compartido) y **EVO 8** (el
+  hardware). La pestaña CONSOLA ya no existe.
+- En SONIDO DEL PC, el fader de cada entrada es su volumen en el sistema (lo
+  que reciben todas las apps). La ganancia hacia la Mezcla está en
+  MICRÓFONO VIRTUAL. Las entradas tienen medidor propio, las cuatro, aunque
+  la Mezcla esté apagada.
+- **El micrófono virtual se enciende y se apaga**: con el interruptor de la
+  pestaña MICRÓFONO VIRTUAL o con `evoctl mezcla on|off|toggle|status`.
+  Apagado, la Mezcla y Compartido no existen y las apps que estaban en
+  Compartido vuelven a la salida. El estado se mantiene al reiniciar.
+  Encenderlo o apagarlo no reinicia PipeWire ni corta el resto del audio:
+  ahora la Mezcla corre como un servicio propio (`evo8-mezcla.service`) y no
+  como parte de PipeWire.
+- En una instalación nueva el micrófono virtual viene apagado.
+  `evoctl setup` migra una instalación anterior: quita la config vieja y deja
+  la Mezcla encendida. Hay que reiniciar PipeWire una vez.
+- `evoctl apply --wait` espera a que aparezca la Mezcla antes de restaurar.
+- `evo8-mixer --mezcla` abre directo en MICRÓFONO VIRTUAL.
+- Se quitó la línea de leyenda bajo las pestañas. Lo que hace cada control
+  se explica en un globo de ayuda al pasar el mouse (faders y PERFILES
+  incluidos).
+
 ### Documentación
 
 - README: un índice, y cómo instalar, actualizar y desinstalar con cada

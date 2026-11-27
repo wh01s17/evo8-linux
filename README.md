@@ -17,11 +17,22 @@ evo8-linux los controla hablando con la interfaz directamente por USB. Además
 incluye un mezclador para PipeWire y, si lo necesitas, un micrófono virtual que
 junta tus entradas con el audio de otras apps.
 
+Son tres partes separadas, cada una con su pestaña en la ventana:
+
+| Parte | Pestaña | Qué toca |
+|---|---|---|
+| [El hardware de la EVO 8](#el-hardware-de-la-evo-8) | EVO 8 | La interfaz misma, por USB |
+| [El sonido del PC](#el-sonido-del-pc) | SONIDO DEL PC | Volúmenes y dispositivos del sistema (PipeWire) |
+| [El micrófono virtual](#el-micrófono-virtual-opcional) | MICRÓFONO VIRTUAL | Un dispositivo virtual que se enciende y se apaga |
+
 ![La pestaña CONSOLA del mezclador: entradas, Compartido, la Mezcla, la salida y los perfiles de cada tarjeta](https://raw.githubusercontent.com/wh01s17/evo8-linux/main/docs/img/consola.png)
 
 ## Índice
 
 - [Qué hace](#qué-hace)
+  - [El hardware de la EVO 8](#el-hardware-de-la-evo-8)
+  - [El sonido del PC](#el-sonido-del-pc)
+  - [El micrófono virtual (opcional)](#el-micrófono-virtual-opcional)
 - [Instalación](#instalación)
   - [Arch Linux](#arch-linux)
   - [Otras distribuciones (pipx)](#otras-distribuciones-pipx)
@@ -39,7 +50,7 @@ junta tus entradas con el audio de otras apps.
 
 ## Qué hace
 
-**El hardware de la EVO 8**
+### El hardware de la EVO 8
 
 - **Mezcla de monitoreo interna**: lo que oyes directo en los audífonos, sin
   pasar por el PC y sin latencia. Es la matriz de 10 entradas (4 analógicas y
@@ -52,16 +63,26 @@ junta tus entradas con el audio de otras apps.
 - **Al conectarla**: la EVO olvida esos ajustes cuando se apaga. Un servicio
   los restaura al conectarla. El phantom nunca se enciende solo.
 
-**Un mezclador para el audio del sistema**
+### El sonido del PC
 
-- Volumen, silencio y medidores de las entradas, las apps y la salida
-  seleccionada, por canal.
-- **Monitor**: escuchar una entrada, o todo, por la salida seleccionada, con
+Un mezclador para el audio del sistema. Funciona igual con el micrófono
+virtual encendido o apagado.
+
+- **Entradas**: preamp, volumen en el sistema y medidor de cada entrada de la
+  EVO.
+- **Apps y salida**: volumen, silencio y medidores de lo que suena y de la
+  salida seleccionada, por canal.
+- **Monitor de entrada**: escuchar una entrada por la salida seleccionada, con
   latencia baja.
 - **Perfiles de tarjeta**: elegir cómo usa el sistema cada tarjeta de sonido,
   con lo que hace cada opción.
+- Los navegadores no pueden cambiar el volumen de los micrófonos por su
+  cuenta (el control automático de ganancia de las videollamadas lo hacía).
 
-**Un micrófono virtual, si lo necesitas**
+### El micrófono virtual (opcional)
+
+Un dispositivo virtual que **se enciende y se apaga** con un interruptor.
+Apagado no existe: no aparece en las apps y el resto del sonido no cambia.
 
 - **Mezcla**: un micrófono que suma las entradas 1-2 de la EVO y una salida
   virtual, **Compartido**. Lo que mandes a Compartido (música, un metrónomo,
@@ -71,7 +92,8 @@ junta tus entradas con el audio de otras apps.
 - **Sincronía**: quien toca sobre la música la oye con retraso, y su
   instrumento llega con otro. *Calibrar* mide ese desfase mientras tocas sobre
   un click y lo compensa retrasando la música solo hacia la Mezcla.
-- Los navegadores no pueden bajar el volumen de la Mezcla por su cuenta.
+- **Monitor de la Mezcla**: escuchar el micrófono completo, tal como lo
+  reciben las apps.
 
 ## Instalación
 
@@ -108,8 +130,11 @@ PKGBUILD al día, por si cambió.
 **Desinstalar**
 
 ```sh
+evoctl mezcla off
 sudo pacman -Rns evo8-linux-git
 ```
+
+`evoctl mezcla off` va antes: desactiva el micrófono virtual en tu usuario.
 
 ### Otras distribuciones (pipx)
 
@@ -121,7 +146,8 @@ evoctl setup
 ```
 
 pip solo instala Python. `evoctl setup` copia a tu usuario la config de
-PipeWire, el servicio que restaura los ajustes y la entrada del menú, y te da
+PipeWire y el servicio del micrófono virtual, el servicio que restaura los
+ajustes y la entrada del menú, y te da
 el comando `sudo` exacto para la regla udev (control por USB sin root). También
 avisa si falta algo del sistema: PipeWire, WirePlumber, `pactl`, `amixer` o la
 fuente *JetBrainsMono Nerd Font*, y si el portal de escritorio quedó con 0 µs
@@ -145,7 +171,8 @@ pipx uninstall evo8-linux
 sudo rm /etc/udev/rules.d/70-audient-evo8.rules
 ```
 
-`evoctl setup --remove` quita los archivos de tu usuario. La regla udev la
+`evoctl setup --remove` apaga el micrófono virtual y quita los archivos de
+tu usuario. La regla udev la
 pusiste con `sudo`, así que se quita igual.
 
 ### Desde el código
@@ -172,7 +199,7 @@ make install
 ```
 
 Los comandos y la config de PipeWire apuntan a la carpeta, así que `git pull`
-basta para ellos. `make install` actualiza las copias: el servicio y la
+basta para ellos. `make install` actualiza las copias: los servicios y la
 entrada del menú.
 
 **Desinstalar**
@@ -185,9 +212,15 @@ sudo rm /etc/udev/rules.d/70-audient-evo8.rules
 
 ### Después de actualizar o desinstalar
 
-- Si la actualización cambió la Mezcla, o si desinstalaste, reinicia PipeWire
-  para cargarla o quitarla (corta el audio un momento):
-  `systemctl --user restart pipewire pipewire-pulse wireplumber`.
+- Si la actualización cambió el micrófono virtual y lo usas, apágalo y
+  enciéndelo para cargarlo: `evoctl mezcla off && evoctl mezcla on`. No
+  corta el resto del audio.
+- **Si vienes de la versión 0.2 o anterior**, la Mezcla estaba dentro de
+  PipeWire y no se podía apagar. Tras actualizar (y `evoctl setup` con pipx),
+  reinicia PipeWire una vez (corta el audio un momento):
+  `systemctl --user restart pipewire pipewire-pulse wireplumber`. Con pipx
+  o desde el código queda encendida como antes; con el paquete de Arch,
+  enciéndela con `evoctl mezcla on`.
 - Reabre la ventana para usar la versión nueva.
 - Desinstalar no borra tus ajustes guardados (ganancias, retardo, preamps y
   mezcla interna). Si no vas a volver a instalarla:
@@ -195,14 +228,14 @@ sudo rm /etc/udev/rules.d/70-audient-evo8.rules
 
 ### Primeros pasos
 
-1. Reinicia PipeWire para cargar la Mezcla (corta el audio un momento):
-   `systemctl --user restart pipewire pipewire-pulse wireplumber`
-2. Pon la EVO 8 en el perfil **Pro Audio**, desde la pestaña CONSOLA (columna
-   PERFILES) o con
+1. Pon la EVO 8 en el perfil **Pro Audio**, desde la pestaña SONIDO DEL PC
+   (columna PERFILES) o con
    `evoctl profiles set alsa_card.usb-Audient_EVO8-00 pro-audio`.
-3. Para usar el micrófono virtual, elige **Mezcla** como micrófono en la app.
-   Si la app tiene supresión de ruido o control automático de ganancia,
-   desactívalos: alteran la música que mandas por Compartido.
+2. Si quieres el micrófono virtual, enciéndelo con el interruptor de la
+   pestaña MICRÓFONO VIRTUAL o con `evoctl mezcla on`. Viene apagado.
+3. En la app, elige **Mezcla** como micrófono. Si la app tiene supresión de
+   ruido o control automático de ganancia, desactívalos: alteran la música
+   que mandas por Compartido.
 
 ## Uso
 
@@ -210,11 +243,14 @@ sudo rm /etc/udev/rules.d/70-audient-evo8.rules
 
 `evo8-mixer`, o *Mezclador EVO 8* en el menú de aplicaciones.
 
-- **CONSOLA**: una tira por canal, en el orden en que viaja el sonido:
-  entradas, Compartido, las apps, la Mezcla y la salida. Cada una tiene
-  preamp, fader, medidores, silencio, monitor y 󰑐 para volver al valor
-  estándar. Al final están los perfiles de cada tarjeta, con lo que hace cada
-  uno.
+- **SONIDO DEL PC**: una tira por canal: las entradas de la EVO (preamp,
+  volumen, medidor y monitor), las apps, la salida seleccionada y los
+  perfiles de cada tarjeta, con lo que hace cada uno.
+- **MICRÓFONO VIRTUAL**: arriba, el interruptor que lo enciende y lo apaga.
+  Encendido, cuánto entra de cada entrada y de Compartido, cuánto oyes
+  Compartido, la sincronía con *Calibrar*, qué apps suenan por Compartido y
+  la Mezcla con su monitor. El cuadrito verde junto al nombre de la pestaña
+  indica que está encendido.
 - **EVO 8**: la mezcla de monitoreo interna y el loop-back. Los cambios
   quedan en espera hasta que pulsas *Aplicar a la EVO*, porque cada envío por
   USB corta el audio un instante (ver [Cómo funciona](#cómo-funciona)).
@@ -223,13 +259,16 @@ sudo rm /etc/udev/rules.d/70-audient-evo8.rules
 
 ![La pestaña EVO 8: phantom y silencio por entrada, y la mezcla de monitoreo de los audífonos 1 con faders y paneo](https://raw.githubusercontent.com/wh01s17/evo8-linux/main/docs/img/evo.png)
 
-`evo8-mixer --evo` abre directo en la pestaña EVO 8. Hay una sola ventana:
+Cada control tiene 󰑐 para volver al valor estándar. `evo8-mixer --mezcla` y
+`evo8-mixer --evo` abren directo en esas pestañas. Hay una sola ventana:
 volver a lanzarla la trae al frente.
 
 ### La línea de comandos
 
 ```sh
 # Micrófono virtual
+evoctl mezcla on                  # encenderlo (queda así al reiniciar); off para apagarlo
+evoctl mezcla status              # on, off, failed, missing o legacy
 evoctl mix get                    # ganancias: [entrada 1, entrada 2, Compartido L, R]
 evoctl mix set 1 0.8              # entrada 1 al 80 % (lineal, 0..4)
 evoctl share list                 # apps que están en Compartido
@@ -238,9 +277,11 @@ evoctl delay set 40               # retrasar Compartido 40 ms hacia la Mezcla
 evoctl calibrate --apply          # medir el desfase tocando sobre un click
 evoctl apply                      # restaurar lo guardado tras reiniciar PipeWire
 
-# Monitor
 evoctl monitor toggle             # escuchar la Mezcla completa
-evoctl monitor input 1 on         # escuchar solo la entrada 1
+
+# Sonido del PC
+evoctl monitor input 1 on         # escuchar la entrada 1 en la salida
+evoctl profiles list              # perfiles de cada tarjeta
 
 # Hardware de la EVO (cada comando corta el audio ~0,1 s)
 evoctl preamp set 2 24.5          # preamp de la entrada 2 en dB
@@ -266,7 +307,7 @@ de escritorio.
   `evoctl setup` lo detecta. Se arregla con
   `systemctl --user restart xdg-desktop-portal` (o cerrando sesión) y
   volviendo a abrir esos programas.
-- **Con el monitor encendido**: el monitor baja la latencia de *todo*
+- **Con un monitor encendido** (de entrada o de la Mezcla): el monitor baja la latencia de *todo*
   PipeWire (quantum 128). En una salida Bluetooth no lo hace, porque esa
   salida necesita búferes grandes y se entrecortaría; ahí el monitor funciona
   igual, con la latencia propia del Bluetooth.
@@ -277,11 +318,14 @@ de escritorio.
 
 El proyecto mueve dos cosas distintas:
 
-- **El audio en el PC** (verde) lo hace PipeWire. Una config instalada por
-  evo8-linux crea **Compartido** (una salida virtual), **mezcla.suma** (un
-  *filter-chain* que retrasa Compartido y aplica una ganancia por canal) y la
-  **Mezcla** (el micrófono virtual). La ventana y `evoctl` cambian esos valores
-  al instante, sin cortes.
+- **El audio en el PC** (verde) lo hace PipeWire. El micrófono virtual es un
+  proceso aparte de PipeWire, el servicio de usuario `evo8-mezcla.service`
+  (`pipewire -c evo8-mezcla.conf`). Crea **Compartido** (una salida virtual),
+  **mezcla.suma** (un *filter-chain* que retrasa Compartido y aplica una
+  ganancia por canal) y la **Mezcla** (el micrófono virtual). Encenderlo es
+  activar el servicio (`systemctl --user enable --now`); apagarlo, detenerlo.
+  Como no vive dentro del daemon, ninguna de las dos cosas reinicia PipeWire.
+  La ventana y `evoctl` cambian sus valores al instante, sin cortes.
 - **El hardware de la EVO** (ámbar) no pasa por PipeWire. Se controla con
   peticiones USB estándar de audio (UAC2) que el kernel no expone. Linux no
   deja enviarlas mientras el driver de audio tiene la interfaz, así que
@@ -296,9 +340,9 @@ El protocolo USB y lo verificado en el dispositivo están en
 
 | Ruta | Qué hay |
 |---|---|
-| [`src/evo8/`](https://github.com/wh01s17/evo8-linux/tree/main/src/evo8) | La librería y `evoctl`: PipeWire (`pw.py`, `mix.py`, `monitor.py`, `apps.py`), preamps (`alsa.py`), USB (`usb.py`, `hw.py`), sincronía (`calibrate.py`) y `evoctl setup` (`user_setup.py`) |
-| [`src/evo8/gui/`](https://github.com/wh01s17/evo8-linux/tree/main/src/evo8/gui) | La ventana: PySide6 y QML |
-| [`src/evo8/data/`](https://github.com/wh01s17/evo8-linux/tree/main/src/evo8/data) | Config de PipeWire, regla udev, servicio, entrada del menú e ícono |
+| [`src/evo8/`](https://github.com/wh01s17/evo8-linux/tree/main/src/evo8) | La librería y `evoctl`. Sonido del PC: `pw.py`, `monitor.py`, `apps.py`, `profiles.py`, `alsa.py` (preamps). Micrófono virtual: `mix.py` (encendido, ganancias, sincronía) y `calibrate.py`. Hardware: `usb.py`, `hw.py`. `evoctl setup`: `user_setup.py` |
+| [`src/evo8/gui/`](https://github.com/wh01s17/evo8-linux/tree/main/src/evo8/gui) | La ventana: PySide6 y QML (`SystemPage`, `MezclaPage`, `HardwarePage`, `AboutPage`) |
+| [`src/evo8/data/`](https://github.com/wh01s17/evo8-linux/tree/main/src/evo8/data) | Config de PipeWire (`evo8-mezcla.conf`: el micrófono virtual), servicios de systemd, regla udev, entrada del menú e ícono |
 | [`packaging/arch/`](https://github.com/wh01s17/evo8-linux/tree/main/packaging/arch) | El PKGBUILD |
 | [`docs/protocolo-usb.md`](https://github.com/wh01s17/evo8-linux/blob/main/docs/protocolo-usb.md) | El protocolo USB de la EVO 8 |
 | [`plan.md`](https://github.com/wh01s17/evo8-linux/blob/main/plan.md) | Arquitectura, estado y próximos pasos |

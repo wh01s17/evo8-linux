@@ -57,6 +57,10 @@ un cliente delgado.
 - Cada control de la ventana tiene un botón **󰑐 restablecer** a su valor
   estándar.
 - Los archivos Python no deben pasar de **1000 líneas** (dividir en módulos).
+- **Tres partes separadas** (pedido del 2026-11-27): el hardware de la EVO,
+  el sonido del PC y el micrófono virtual. Cada una con su pestaña, y el
+  micrófono virtual **opcional**, con un interruptor que lo apaga del todo.
+  Nada del sonido del PC debe depender de que la Mezcla esté encendida.
 
 ---
 
@@ -65,7 +69,7 @@ un cliente delgado.
 ```
                 ┌──────────────── evo8 (librería Python) ────────────────┐
  evoctl (CLI) ──┤ pw.py       pw-dump / pw-cli / pw-link / pactl wrappers   │
- ventana (Qt) ──┤ mix.py      ganancias, sincronía y escucha de la Mezcla   │
+ ventana (Qt) ──┤ mix.py      Mezcla: encendido, ganancias, sincronía       │
  shell/barra  ──┤ monitor.py  monitor general y por entrada (enlaces)       │
                 │ alsa.py     controles que ya expone el kernel (preamps)   │
                 │ apps.py     apps → Compartido, perfiles de tarjeta        │
@@ -82,7 +86,27 @@ un cliente delgado.
  src/evo8/data/    config de PipeWire, udev, servicio, .desktop, ícono
 ```
 
-### 3.1 Grafo de audio (src/evo8/data/pipewire/pipewire.conf.d/20-mezcla.conf)
+### 3.1 Micrófono virtual: grafo de audio (src/evo8/data/pipewire/evo8-mezcla.conf)
+
+- **No es un drop-in del daemon** (lo era hasta 0.2: `pipewire.conf.d/20-mezcla.conf`,
+  siempre encendido). Es una config completa de cliente que corre
+  `evo8-mezcla.service` (`pipewire -c evo8-mezcla.conf`, como el
+  `filter-chain.service` de PipeWire): `BindsTo=pipewire.service`,
+  `WantedBy=pipewire.service`. **Habilitado = encendido**: arranca con
+  PipeWire y también tras reiniciarlo. `evoctl mezcla on|off` =
+  `systemctl --user enable|disable --now`; no reinicia PipeWire ni corta otro
+  audio. `ExecStartPost=-evoctl apply --wait` restaura ganancias, retardo y
+  escucha.
+- `mix.service_status()`: `on`, `off`, `failed`, `missing` (sin unidad) o
+  `legacy` (nodos presentes sin el servicio = drop-in viejo cargado; no se
+  puede apagar hasta reiniciar PipeWire). Apagar corta antes el monitor de la
+  Mezcla (deshace el silencio de la escucha y el quantum).
+- Migración: `evoctl setup` borra el drop-in viejo copiado y hace
+  `systemctl --user enable` (sin `--now`, para no duplicar nodos) → tras
+  reiniciar PipeWire vuelve encendida. `make install` igual con su enlace. El
+  paquete de Arch solo avisa (pacman ya quita el archivo).
+- Instalación nueva: apagado.
+
 
 ```
 EVO capture AUX0/AUX1 ─► mezcla.entradas (loopback) ─► mezcla.suma FL/FR
@@ -134,13 +158,23 @@ mezcla.suma = filter-chain: compL/compR (delay) ─► mix (Gain 1-4) ─► "Me
   preamps, monitor y perfiles. Las escrituras se aplican al modelo al instante,
   se agrupan 60 ms por clave y el valor sondeado de esa clave se ignora 1,5 s.
 - Volúmenes en la escala de PulseAudio (raw/65536), como pavucontrol.
-- Medidores: un `pw-record --raw` por fuente (mezcla.suma 4 canales,
-  Mezcla 1 canal), pasivos y con `node.name = evo8.meter.*`.
+- Pestañas: SONIDO DEL PC (`SystemPage.qml`: entradas con PRE, volumen de
+  canal de la fuente `pro-input-0`, medidor y monitor; apps; salida;
+  perfiles), MICRÓFONO VIRTUAL (`MezclaPage.qml`: interruptor arriba;
+  encendido, ganancias 1-2, COMP con OÍR/SINC/Calibrar, `AppShare.qml` para
+  mandar apps a Compartido, MEZCLA con su monitor), EVO 8, ACERCA DE.
+  `--mezcla` / `--evo` abren en esas pestañas.
+- Medidores: un `pw-record --raw` por fuente, con `node.name = evo8.meter.*`:
+  las 4 entradas de la EVO directo (`--channel-map AUX0..3`, **no pasivo**,
+  para que se muevan con la Mezcla apagada; **sin** `node.dont-fallback`:
+  WirePlumber corta ese stream sobre la fuente ALSA con "defined target not
+  found"), mezcla.suma 4 canales y Mezcla 1 canal (pasivos y con
+  `dont-fallback`: apagada no deben caer a otro dispositivo).
 - Hardware: cambios en espera; "Aplicar a la EVO" hace una sola sesión USB y
   relee. El último estado leído se guarda en `state.json` (`hw`).
 - QML sin dependencias del shell: `Theme.qml` (singleton), `PixelSlider`,
-  `Toggle`, `GlyphButton`, `VMeter`, `Strip`, `ConsolePage`, `HardwarePage`,
-  `AboutPage`.
+  `Toggle`, `GlyphButton`, `VMeter`, `Strip`, `SystemPage`, `MezclaPage`,
+  `AppShare`, `HardwarePage`, `AboutPage`.
 - ACERCA DE (`about.py`): solo lee archivos (metadatos, sysfs para el
   firmware, rutas de config). Nunca habla con la EVO por USB. La versión sale
   de `evo8.__version__` (pyproject la toma de ahí); `evoctl --version`.
@@ -152,9 +186,10 @@ mezcla.suma = filter-chain: compL/compR (delay) ─► mix (Gain 1-4) ─► "Me
 - Se cambia de pestaña con `opacity` + `enabled`, **no** con `visible`:
   `visible` avisa a los ~2000 elementos de la página y cada `Row`/`Column` de
   celdas (faders de puntos, medidores) se reordena una vez por hijo. Medido:
-  ~450 ms por cambio con `visible`, ~20 ms así. La leyenda de CONSOLA también
-  conserva su línea en las otras pestañas (si se colapsa, cambia la altura y
-  todas las tiras se recalculan). En reposo no gasta más CPU: el renderer se
+  ~450 ms por cambio con `visible`, ~20 ms así. Nada sobre las pestañas debe
+  cambiar de altura al cambiar de pestaña: todas las tiras se recalcularían
+  (por eso ya no hay línea de leyenda; lo explican los globos de ayuda,
+  `faderTip` y `tip` de `StripGroup`). En reposo no gasta más CPU: el renderer se
   salta los nodos con opacidad 0.
 - Instancia única por `QLocalServer`: un segundo `evo8-mixer` manda `raise`
   y espera `ok` (1 s). Si la ventana anterior está colgada, el kernel igual
@@ -208,9 +243,8 @@ MonitorController del EVO 16 (no aplica al EVO 8).
 - Preamps guardados: la EVO vuelve a -8 dB tras un corte de energía;
   `evoctl apply` los restaura.
 - **Ventana del mezclador** (`evo8-mixer`, PySide6 + QML en
-  `src/evo8/gui/`): pestaña CONSOLA (ENTRADAS con PRE/fader/MONITOR,
-  COMPARTIDO con OÍR/SINC, APPS con compartir/mute, MEZCLA con MONITOR, SALIDA
-  por pares, PERFILES) y pestaña EVO 8 (loop-back y mezcla interna 10×4 con
+  `src/evo8/gui/`): pestañas SONIDO DEL PC y MICRÓFONO VIRTUAL (ver §3.3;
+  hasta 0.2 eran una sola, CONSOLA) y pestaña EVO 8 (loop-back y mezcla interna 10×4 con
   cambios en espera y "Aplicar a la EVO"). `evo8-mixer --evo` abre en la
   pestaña de hardware. App id Wayland: `evo8-mixer`. Una sola ventana;
   `EVO8_MIXER_INSTANCE=<nombre>` abre una instancia aparte (pruebas).
@@ -292,8 +326,9 @@ EVO8_MIXER_INSTANCE=dev PYTHONPATH=src python3 -m evo8.gui.app   # la ventana de
   con `[gui,usb]`, tests contra el paquete instalado y `evoctl setup` en un
   home vacío.
 - Archivos del sistema dentro del paquete (`src/evo8/data/`), para que pip los
-  lleve. `evoctl setup` (`user_setup.py`) los copia al usuario (config de
-  PipeWire, servicio con la ruta absoluta de `evoctl`, `.desktop`, ícono),
+  lleve. `evoctl setup` (`user_setup.py`) los copia al usuario (config de la
+  Mezcla, drop-in de pipewire-pulse, servicios con la ruta absoluta de
+  `evoctl`, `.desktop`, ícono),
   imprime el `sudo` de la regla udev y no reinicia PipeWire. No pisa una
   config que ya instala el sistema (`/usr/share/pipewire`) ni los enlaces de
   `make install`. `evoctl setup --remove` deshace.
