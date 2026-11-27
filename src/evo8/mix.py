@@ -4,10 +4,14 @@ It is optional and runs as a PipeWire client of its own, the user unit
 evo8-mezcla.service: enabled means on (it starts with PipeWire), disabled
 means none of its nodes exist. Switching it touches no other audio.
 
-mezcla.suma is a filter-chain summing four channels into Mezcla:
+mezcla.suma is a filter-chain summing six channels into Mezcla:
   mix:Gain 1 = interface input 1, mix:Gain 2 = input 2,
   mix:Gain 3/4 = Compartido L/R, after compL/compR, which delay Compartido so
-  it lines up with an instrument played along to it.
+  it lines up with an instrument played along to it,
+  mix:Gain 5 = input 3, mix:Gain 6 = input 4 (last, so 1-4 kept their meaning).
+All four inputs are always wired. Which of them are "in the Mezcla" is a
+saved list; the rest run at gain 0, so adding or removing one is a gain
+change: instant, and the Mezcla never goes away while apps use it.
 These are live Props params, but PipeWire resets them to the config's values
 whenever it restarts, so every change is also saved and `apply` puts the saved
 values back. The Compartido listening level (mezcla.compartido.escucha) is
@@ -25,7 +29,11 @@ SUM_NODE = "mezcla.suma"
 LISTEN_NODE = "mezcla.compartido.escucha"
 SHARED_SINK = "Compartido"
 MIX_SOURCE = "Mezcla"
-DEFAULT_GAINS = [1.0, 1.0, 0.5, 0.5]
+# Standard level of each mix:Gain (an input's when it is in the Mezcla).
+DEFAULT_GAINS = [1.0, 1.0, 0.5, 0.5, 1.0, 1.0]
+GAIN_COUNT = len(DEFAULT_GAINS)
+INPUTS = 4
+DEFAULT_INPUTS = [1, 2]
 MAX_GAIN = 4.0
 MAX_DELAY_MS = 500
 SERVICE = "evo8-mezcla.service"
@@ -103,17 +111,54 @@ def _graph_params(nid: int) -> dict[str, float]:
 
 
 def gains() -> list[float]:
+    """mix:Gain 1-6: inputs 1-2, Compartido L/R, inputs 3-4."""
     p = _graph_params(_sum_id())
-    return [float(p.get(f"mix:Gain {n}", DEFAULT_GAINS[n - 1])) for n in range(1, 5)]
+    return [float(p.get(f"mix:Gain {n}", DEFAULT_GAINS[n - 1])) for n in range(1, GAIN_COUNT + 1)]
 
 
 def set_gain(n: int, gain: float) -> None:
-    if n not in (1, 2, 3, 4):
-        raise MixError("gain number must be 1-4")
+    if not 1 <= n <= GAIN_COUNT:
+        raise MixError(f"gain number must be 1-{GAIN_COUNT}")
     if not 0 <= gain <= MAX_GAIN:
         raise MixError(f"gain must be between 0 and {MAX_GAIN:g}")
     pw.set_graph_param(_sum_id(), f"mix:Gain {n}", gain)
     state.save(str(n), gain)
+
+
+# ---- which inputs are in the Mezcla ----
+
+def gain_number(inp: int) -> int:
+    """The mix:Gain that carries interface input `inp` (1-4)."""
+    return inp if inp <= 2 else inp + 2
+
+
+def inputs() -> list[int]:
+    saved = state.load().get("inputs")
+    if not isinstance(saved, list):
+        return list(DEFAULT_INPUTS)
+    return sorted({n for n in saved if isinstance(n, int) and 1 <= n <= INPUTS})
+
+
+def _input_gain(inp: int) -> float:
+    """The level an input comes back at: its saved gain, else the standard."""
+    g = state.load().get(str(gain_number(inp)))
+    if isinstance(g, (int, float)) and 0 < g <= MAX_GAIN:
+        return float(g)
+    return DEFAULT_GAINS[gain_number(inp) - 1]
+
+
+def set_input(inp: int, on: bool) -> None:
+    """Add an interface input to the Mezcla, or take it out (gain 0; its
+    level is kept for when it comes back). Saved even while the Mezcla is
+    off; applied live when it is on."""
+    if not 1 <= inp <= INPUTS:
+        raise MixError(f"input must be 1-{INPUTS}")
+    current = inputs()
+    wanted = sorted(set(current) | {inp}) if on else [n for n in current if n != inp]
+    state.save("inputs", wanted)
+    nid = pw.node_id(SUM_NODE)
+    if nid is not None:
+        pw.set_graph_param(nid, f"mix:Gain {gain_number(inp)}", _input_gain(inp) if on else 0.0)
 
 
 def delay_ms() -> int:
@@ -154,10 +199,15 @@ def apply() -> None:
         return
     nid = pw.node_id(SUM_NODE)
     if nid is not None:
-        for n in range(1, 5):
+        members = inputs()
+        for n in range(1, GAIN_COUNT + 1):
             g = saved.get(str(n))
             if isinstance(g, (int, float)) and 0 <= g <= MAX_GAIN:
                 pw.set_graph_param(nid, f"mix:Gain {n}", float(g))
+        for inp in range(1, INPUTS + 1):      # membership wins over a saved level
+            on = inp in members
+            if not on or str(gain_number(inp)) not in saved:
+                pw.set_graph_param(nid, f"mix:Gain {gain_number(inp)}", _input_gain(inp) if on else 0.0)
         ms = saved.get("delay_ms")
         if isinstance(ms, (int, float)) and 0 <= ms <= MAX_DELAY_MS:
             _set_delay_live(nid, float(ms))

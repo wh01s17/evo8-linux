@@ -71,6 +71,7 @@ def _slow_read() -> dict:
         "mezclaService": service,
         "gains": _safe(mix.gains) if running else None,
         "delayMs": _safe(mix.delay_ms) if running else None,
+        "mezclaInputs": _safe(mix.inputs, list(mix.DEFAULT_INPUTS)),
         "preamp": _safe(alsa.preamp),
         "monitor": _safe(monitor.status, "unavailable"),
         "inputMonitors": _safe(monitor.inputs, []),
@@ -90,7 +91,7 @@ class Backend(QObject):
         self._model: dict = {
             "gains": None, "delayMs": None, "preamp": None, "monitor": "",
             "inputMonitors": [], "cards": [], "sink": None, "source": None, "mezcla": None,
-            "mezclaService": "", "mezclaBusy": False,
+            "mezclaService": "", "mezclaBusy": False, "mezclaInputs": list(mix.DEFAULT_INPUTS),
             "escucha": None, "streams": [], "message": "",
             "calibrating": False, "notice": "",
         }
@@ -123,7 +124,8 @@ class Backend(QObject):
 
         self._meters = Meters([
             ("entradas", monitor.INPUT_SOURCE, 4, False, False, "AUX0,AUX1,AUX2,AUX3"),
-            ("suma", mix.SUM_NODE, 4, True),       # FL/FR inputs 1-2, RL/RR Compartido
+            # In mix:Gain order: inputs 1-2, Compartido L/R, inputs 3-4.
+            ("suma", mix.SUM_NODE, 6, True, True, "FL,FR,RL,RR,SL,SR"),
             ("mezcla", mix.MIX_SOURCE, 1, False),
         ])
         self._meters.start()
@@ -276,10 +278,22 @@ class Backend(QObject):
         self._local("gains", gains)
         self._queue(f"gain{index}", mix.set_gain, index + 1, gains[index])
 
+    @Slot(int, bool)
+    def setMezclaInput(self, inp: int, on: bool) -> None:
+        """Add interface input `inp` (1-4) to the Mezcla or take it out."""
+        members = set(self._model["mezclaInputs"] or [])
+        (members.add if on else members.discard)(inp)
+        self._local("mezclaInputs", sorted(members))
+        if self._model["gains"] and not on:
+            gains = list(self._model["gains"])
+            gains[mix.gain_number(inp) - 1] = 0.0
+            self._local("gains", gains)
+        self._worker.submit(f"mezcla-input{inp}", mix.set_input, inp, on)
+
     @Slot(int)
     def toggleGainMute(self, index: int) -> None:
-        """Mute a Mezcla gain (0..3; 2 and 3 move together) and bring back the
-        level it had."""
+        """Mute a Mezcla gain (0..5; 2 and 3, Compartido, move together) and
+        bring back the level it had."""
         gains = list(self._model["gains"] or mix.DEFAULT_GAINS)
         indices = [2, 3] if index in (2, 3) else [index]
         if gains[indices[0]] > 0:

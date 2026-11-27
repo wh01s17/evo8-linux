@@ -42,6 +42,9 @@ Item {
     property bool showMute: true
     property bool shareVisible: false
     property bool sharedOn: false
+    property bool removeVisible: false     // a ✕ in the top-right corner (take the channel out)
+    property string removeTip: ""
+    signal removeClicked()
 
     property string bottomLabel: ""
     property bool bottomEnabled: true
@@ -90,6 +93,21 @@ Item {
 
     width: master ? unit * 1.3 : unit
     height: column.implicitHeight + 16
+
+    // Above the column, so the title keeps its centre.
+    GlyphButton {
+        z: 1
+        visible: strip.removeVisible
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.topMargin: 6
+        anchors.rightMargin: 8
+        text: "󰅖"
+        font.pixelSize: Theme.body
+        color: Theme.dim
+        tip: strip.removeTip
+        onClicked: strip.removeClicked()
+    }
 
     Rectangle {
         anchors.fill: parent

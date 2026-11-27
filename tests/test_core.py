@@ -97,6 +97,52 @@ class MezclaSwitch(unittest.TestCase):
                 mix.gains()
 
 
+class MezclaInputs(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        mock.patch.object(state, "STATE", Path(self.tmp.name) / "state.json").start()
+        mock.patch.object(state, "LEGACY", Path(self.tmp.name) / "none.json").start()
+        self.set = mock.patch.object(pw, "set_graph_param").start()
+        mock.patch.object(pw, "node_id", return_value=44).start()
+        self.addCleanup(mock.patch.stopall)
+
+    def live(self) -> dict:
+        return {c.args[1]: c.args[2] for c in self.set.call_args_list}
+
+    def test_inputs_3_4_ride_on_gains_5_6(self):
+        self.assertEqual([mix.gain_number(n) for n in (1, 2, 3, 4)], [1, 2, 5, 6])
+
+    def test_starts_with_inputs_1_2(self):
+        self.assertEqual(mix.inputs(), [1, 2])
+
+    def test_add_and_remove(self):
+        mix.set_input(3, True)
+        self.assertEqual(mix.inputs(), [1, 2, 3])
+        self.assertEqual(self.live(), {"mix:Gain 5": 1.0})
+        state.save("5", 1.6)                  # its fader moved
+        mix.set_input(3, False)
+        self.assertEqual(mix.inputs(), [1, 2])
+        self.assertEqual(self.live()["mix:Gain 5"], 0.0)
+        mix.set_input(3, True)                # back at its own level
+        self.assertEqual(self.live()["mix:Gain 5"], 1.6)
+        mix.set_input(1, False)
+        self.assertEqual(mix.inputs(), [2, 3])
+        with self.assertRaises(mix.MixError):
+            mix.set_input(5, True)
+
+    def test_apply_keeps_removed_inputs_silent(self):
+        state.save("1", 2.0)
+        state.save("inputs", [2, 4])
+        with mock.patch.object(pw, "props_params", return_value=[]):
+            mix.apply()
+        live = self.live()
+        self.assertEqual(live["mix:Gain 1"], 0.0)     # saved 2.0, but out of the Mezcla
+        self.assertEqual(live["mix:Gain 2"], 1.0)
+        self.assertEqual(live["mix:Gain 5"], 0.0)
+        self.assertEqual(live["mix:Gain 6"], 1.0)
+
+
 class Preamp(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()

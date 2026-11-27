@@ -26,18 +26,22 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--version", action="version", version=f"evo8-linux {about.version()}")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    mz = sub.add_parser("mezcla", help="encender o apagar el micrófono virtual (la Mezcla y Compartido)")
+    mz = sub.add_parser("mezcla", help="encender o apagar el micrófono virtual y elegir sus entradas")
     mzs = mz.add_subparsers(dest="action", required=True)
     mzs.add_parser("status", help="on, off, failed, missing (sin instalar) o legacy (instalación anterior)")
     for name, text in (("on", "encender (queda encendida al reiniciar)"), ("off", "apagar"),
                        ("toggle", "cambiar")):
         mzs.add_parser(name, help=text)
+    mzs.add_parser("inputs", help="entradas de la EVO que están en la Mezcla, en JSON")
+    for name, text in (("add", "agregar una entrada de la EVO a la Mezcla"),
+                       ("remove", "quitar una entrada de la Mezcla")):
+        mzs.add_parser(name, help=text).add_argument("input", type=int, choices=range(1, mix.INPUTS + 1))
 
-    m = sub.add_parser("mix", help="ganancias de la Mezcla (1-2 entradas, 3-4 Compartido L/R)")
+    m = sub.add_parser("mix", help="ganancias de la Mezcla (1-2 entradas 1-2, 3-4 Compartido L/R, 5-6 entradas 3-4)")
     ms = m.add_subparsers(dest="action", required=True)
-    ms.add_parser("get", help="las cuatro ganancias, en JSON")
+    ms.add_parser("get", help="las seis ganancias, en JSON")
     s = ms.add_parser("set", help="una ganancia, lineal 0..4")
-    s.add_argument("n", type=int, choices=range(1, 5))
+    s.add_argument("n", type=int, choices=range(1, mix.GAIN_COUNT + 1))
     s.add_argument("gain", type=float)
 
     d = sub.add_parser("delay", help="compensación de sincronía de Compartido hacia la Mezcla")
@@ -130,6 +134,10 @@ def _dispatch(a) -> int:
     if a.cmd == "mezcla":
         if a.action == "status":
             print(mix.service_status())
+        elif a.action == "inputs":
+            _json(mix.inputs())
+        elif a.action in ("add", "remove"):
+            mix.set_input(a.input, a.action == "add")
         else:
             on = {"on": True, "off": False}.get(a.action, mix.service_status() != "on")
             mix.set_enabled(on)

@@ -115,7 +115,17 @@ Apps ─► "Compartido" (sink virtual) ─► mezcla.compartido.escucha ─► 
 mezcla.suma = filter-chain: compL/compR (delay) ─► mix (Gain 1-4) ─► "Mezcla" (fuente mono)
 ```
 
-- `mix:Gain 1/2` = entradas 1/2; `mix:Gain 3/4` = Compartido L/R (0.5 = -6 dB).
+- `mix:Gain 1/2` = entradas 1/2; `mix:Gain 3/4` = Compartido L/R (0.5 = -6 dB);
+  `mix:Gain 5/6` = entradas 3/4 (al final, para no cambiar el significado de
+  1-4 ni de lo guardado). El sink es de 6 canales: FL FR = entradas 1-2,
+  RL RR = Compartido, SL SR = entradas 3-4; `mezcla.entradas` captura
+  AUX0-AUX3. El builtin `mixer` admite 8 entradas.
+- Entradas en la Mezcla (botón + y ✕, `evoctl mezcla add|remove`): las 4
+  están siempre conectadas; la lista va en `state.json` (`inputs`, por
+  defecto `[1, 2]`) y las que no están van con ganancia 0. Es solo un cambio
+  de ganancia: instantáneo y sin que la Mezcla desaparezca. Se descartó
+  regenerar la config por fuente (permitiría micrófonos que no son de la
+  EVO) porque reinicia el servicio y las apps pierden el micrófono ~1 s.
 - `compL/compR:Delay (s)` = compensación de sincronía (solo hacia la suma).
 - Las posiciones del sink deben ser estándar (FL FR RL RR): con AUX0/AUX1 el
   filter-chain entregaba silencio.
@@ -335,7 +345,7 @@ EVO8_MIXER_INSTANCE=dev PYTHONPATH=src python3 -m evo8.gui.app   # la ventana de
 - **Publicar una versión**: seguir `PUBLISH.md` (changelog, versión, tag).
   El tag `vX.Y.Z` dispara `.github/workflows/release.yml`: PyPI (trusted
   publishing, entorno `pypi`) y la release de GitHub con la sección de
-  `CHANGELOG.md` (`tools/release_notes.py`). Última publicada: **0.3.0**
+  `CHANGELOG.md` (`tools/release_notes.py`). Última publicada: **0.4.0**
   (2026-11-27, https://pypi.org/project/evo8-linux/).
 - Mientras se trabaja, anotar los cambios visibles en `## [Sin publicar]` de
   `CHANGELOG.md`.

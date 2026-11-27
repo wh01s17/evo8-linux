@@ -84,10 +84,13 @@ virtual encendido o apagado.
 Un dispositivo virtual que **se enciende y se apaga** con un interruptor.
 Apagado no existe: no aparece en las apps y el resto del sonido no cambia.
 
-- **Mezcla**: un micrófono que suma las entradas 1-2 de la EVO y una salida
-  virtual, **Compartido**. Lo que mandes a Compartido (música, un metrónomo,
+- **Mezcla**: un micrófono que suma las entradas de la EVO que elijas y una
+  salida virtual, **Compartido**. Lo que mandes a Compartido (música, un metrónomo,
   un backing track) lo escuchas tú y también sale por la Mezcla. Cualquier app
   puede usarla como micrófono: OBS, un DAW, Discord o el navegador.
+- **Entradas a elección**: empieza con la 1 y la 2. Con **+** agregas la 3
+  o la 4, y con ✕ quitas cualquiera, al instante y sin cortes, incluso con
+  una app usando el micrófono.
 - **Ganancia en vivo** por canal, y apps que se mandan a Compartido de a una.
 - **Sincronía**: quien toca sobre la música la oye con retraso, y su
   instrumento llega con otro. *Calibrar* mide ese desfase mientras tocas sobre
@@ -95,7 +98,7 @@ Apagado no existe: no aparece en las apps y el resto del sonido no cambia.
 - **Monitor de la Mezcla**: escuchar el micrófono completo, tal como lo
   reciben las apps.
 
-![La pestaña MICRÓFONO VIRTUAL encendida: el interruptor arriba, cuánto entra de las entradas 1-2 y de Compartido, el retardo de sincronía con Calibrar, las apps que se pueden mandar a Compartido y la Mezcla con su monitor](https://raw.githubusercontent.com/wh01s17/evo8-linux/main/docs/img/mezcla.png)
+![La pestaña MICRÓFONO VIRTUAL encendida: el interruptor arriba, las entradas 1-2 con la ✕ para quitarlas y el + para agregar otra, cuánto entra de Compartido, el retardo de sincronía con Calibrar, las apps que se pueden mandar a Compartido y la Mezcla con su monitor](https://raw.githubusercontent.com/wh01s17/evo8-linux/main/docs/img/mezcla.png)
 
 ## Instalación
 
@@ -249,7 +252,8 @@ sudo rm /etc/udev/rules.d/70-audient-evo8.rules
   volumen, medidor y monitor), las apps, la salida seleccionada y los
   perfiles de cada tarjeta, con lo que hace cada uno.
 - **MICRÓFONO VIRTUAL**: arriba, el interruptor que lo enciende y lo apaga.
-  Encendido, cuánto entra de cada entrada y de Compartido, cuánto oyes
+  Encendido, qué entradas de la EVO entran (**+** para agregar, ✕ para
+  quitar) y cuánto de cada una y de Compartido, cuánto oyes
   Compartido, la sincronía con *Calibrar*, qué apps suenan por Compartido y
   la Mezcla con su monitor. El cuadrito verde junto al nombre de la pestaña
   indica que está encendido.
@@ -271,7 +275,9 @@ volver a lanzarla la trae al frente.
 # Micrófono virtual
 evoctl mezcla on                  # encenderlo (queda así al reiniciar); off para apagarlo
 evoctl mezcla status              # on, off, failed, missing o legacy
-evoctl mix get                    # ganancias: [entrada 1, entrada 2, Compartido L, R]
+evoctl mezcla add 3               # sumar la entrada 3 (remove para quitarla)
+evoctl mezcla inputs              # entradas en la Mezcla: [1,2,3]
+evoctl mix get                    # ganancias: [entrada 1, 2, Compartido L, R, entrada 3, 4]
 evoctl mix set 1 0.8              # entrada 1 al 80 % (lineal, 0..4)
 evoctl share list                 # apps que están en Compartido
 evoctl share on <node-id>         # mandar una app a Compartido
@@ -324,7 +330,9 @@ El proyecto mueve dos cosas distintas:
   proceso aparte de PipeWire, el servicio de usuario `evo8-mezcla.service`
   (`pipewire -c evo8-mezcla.conf`). Crea **Compartido** (una salida virtual),
   **mezcla.suma** (un *filter-chain* que retrasa Compartido y aplica una
-  ganancia por canal) y la **Mezcla** (el micrófono virtual). Encenderlo es
+  ganancia por canal) y la **Mezcla** (el micrófono virtual). Las cuatro
+  entradas están siempre conectadas a la suma: las que no elegiste van con
+  ganancia 0, por eso agregarlas o quitarlas es instantáneo. Encenderlo es
   activar el servicio (`systemctl --user enable --now`); apagarlo, detenerlo.
   Como no vive dentro del daemon, ninguna de las dos cosas reinicia PipeWire.
   La ventana y `evoctl` cambian sus valores al instante, sin cortes.
