@@ -13,7 +13,9 @@ SINKS = [
      "volume": vol(65536, 65536, 32768, 32768, 0, 0), "properties": {"device.nick": "EVO8"}},
     {"index": 46, "name": "Compartido", "mute": False, "volume": vol(65536, 65536), "properties": {}},
 ]
-SOURCES = [{"name": "Mezcla", "mute": True, "volume": vol(52429), "properties": {}}]
+SOURCES = [{"name": "Mezcla", "mute": True, "volume": vol(52429), "properties": {}},
+           {"name": "alsa_input.usb-Audient_EVO8-00.pro-input-0", "mute": False,
+            "volume": vol(65536, 32768, 65536, 65536, 65536, 65536), "properties": {}}]
 INPUTS = [
     {"index": 7, "sink": 60, "mute": False, "volume": vol(65536, 65536),
      "properties": {"node.name": "mezcla.compartido.escucha", "object.id": "45"}},
@@ -32,6 +34,17 @@ class Snapshot(unittest.TestCase):
         self.assertEqual(self.s["sink"]["label"], "EVO8")
         self.assertTrue(self.s["sink"]["isPro"])
         self.assertEqual(self.s["sink"]["volumes"], [1.0, 1.0, 0.5, 0.5, 0.0, 0.0])
+
+    def test_interface_inputs_as_the_system_sees_them(self):
+        self.assertEqual(self.s["source"]["volumes"][:2], [1.0, 0.5])
+        self.assertFalse(self.s["source"]["mute"])
+
+    def test_mezcla_off(self):
+        s = snapshot.build(SINKS[:1], SOURCES[1:], INPUTS[1:2], SINKS[0]["name"])
+        self.assertIsNone(s["mezcla"])
+        self.assertIsNone(s["escucha"])
+        self.assertFalse(s["streams"][0]["shared"])
+        self.assertIsNotNone(s["source"])
 
     def test_mezcla_and_listening(self):
         self.assertEqual(self.s["mezcla"], {"volume": 0.8, "mute": True})

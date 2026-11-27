@@ -5,6 +5,7 @@ import "."
 Column {
     id: group
     property string title: ""
+    property string tip: ""
     default property alias strips: row.data
     spacing: 10
 
@@ -15,6 +16,8 @@ Column {
         font.pixelSize: Theme.caption
         font.letterSpacing: 1.4
         font.bold: true
+        HoverHandler { id: titleHover }
+        Tip { visible: titleHover.hovered && group.tip !== ""; text: group.tip }
     }
     Row {
         id: row

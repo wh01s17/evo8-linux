@@ -7,7 +7,9 @@ Strip 1.0 Strip.qml
 StripGroup 1.0 StripGroup.qml
 Divider 1.0 Divider.qml
 CardProfiles 1.0 CardProfiles.qml
-ConsolePage 1.0 ConsolePage.qml
+SystemPage 1.0 SystemPage.qml
+MezclaPage 1.0 MezclaPage.qml
+AppShare 1.0 AppShare.qml
 HardwarePage 1.0 HardwarePage.qml
 Tip 1.0 Tip.qml
 HwMixStrip 1.0 HwMixStrip.qml

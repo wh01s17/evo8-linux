@@ -4,7 +4,8 @@ Everything slow (pactl, pw-cli, amixer, USB) runs on one worker thread, in
 order, so the window never blocks and writes never overtake each other.
 
 * Reads: a 1 s poll for PulseAudio state (devices, streams, volumes) and a 3 s
-  poll for the rest (Mezcla gains, sync delay, preamps, monitor, profiles).
+  poll for the rest (whether the Mezcla is on, its gains and sync delay,
+  preamps, monitor, profiles).
 * Writes: sliders change the model at once (so the control does not jump) and
   queue a write; writes with the same key coalesce for 60 ms, so a drag costs a
   few commands, not one per pixel. Polled values for a key are ignored for a
@@ -64,9 +65,12 @@ def _safe(fn, default=None):
 
 
 def _slow_read() -> dict:
+    service = _safe(mix.service_status, "missing")
+    running = service in ("on", "legacy")
     return {
-        "gains": _safe(mix.gains),
-        "delayMs": _safe(mix.delay_ms),
+        "mezclaService": service,
+        "gains": _safe(mix.gains) if running else None,
+        "delayMs": _safe(mix.delay_ms) if running else None,
         "preamp": _safe(alsa.preamp),
         "monitor": _safe(monitor.status, "unavailable"),
         "inputMonitors": _safe(monitor.inputs, []),
@@ -85,7 +89,8 @@ class Backend(QObject):
         super().__init__(parent)
         self._model: dict = {
             "gains": None, "delayMs": None, "preamp": None, "monitor": "",
-            "inputMonitors": [], "cards": [], "sink": None, "mezcla": None,
+            "inputMonitors": [], "cards": [], "sink": None, "source": None, "mezcla": None,
+            "mezclaService": "", "mezclaBusy": False,
             "escucha": None, "streams": [], "message": "",
             "calibrating": False, "notice": "",
         }
@@ -117,6 +122,7 @@ class Backend(QObject):
         self._poll()
 
         self._meters = Meters([
+            ("entradas", monitor.INPUT_SOURCE, 4, False, False, "AUX0,AUX1,AUX2,AUX3"),
             ("suma", mix.SUM_NODE, 4, True),       # FL/FR inputs 1-2, RL/RR Compartido
             ("mezcla", mix.MIX_SOURCE, 1, False),
         ])
@@ -201,6 +207,13 @@ class Backend(QObject):
                 self._model = dict(self._model, calibrating=False, delayMs=result["ms"],
                                    notice=f"SINC · {result['summary']} · aplicado {result['ms']} ms")
             self.modelChanged.emit()
+        elif key == "mezcla-switch":
+            self._hold.pop("mezclaService", None)
+            self._model = dict(self._model, mezclaBusy=False,
+                               message="MEZCLA · " + error if error else self._model["message"])
+            self.modelChanged.emit()
+            self._inflight.add("slow")
+            self._worker.submit("slow", _slow_read)
         elif key == "hw-read":
             self._hw_done(result, error, "Leído de la EVO.")
         elif key == "hw-apply":
@@ -226,6 +239,35 @@ class Backend(QObject):
         self._hold_key(key)
         self._model = dict(self._model, **{key: value})
         self.modelChanged.emit()
+
+    # ---- the Mezcla on / off ----
+    @Slot(bool)
+    def setMezclaEnabled(self, on: bool) -> None:
+        if self._model["mezclaBusy"] or self._model["mezclaService"] not in ("on", "off", "failed"):
+            return
+        self._hold_key("mezclaService")
+        self._model = dict(self._model, mezclaBusy=True, mezclaService="on" if on else "off",
+                           message="", **({} if on else {"gains": None, "delayMs": None}))
+        self.modelChanged.emit()
+        self._worker.submit("mezcla-switch", mix.set_enabled, on)
+
+    @Slot(int, float)
+    def setSourceChannel(self, channel: int, value: float) -> None:
+        """One channel of the interface's capture source (system-wide)."""
+        src = self._model["source"]
+        if not src or not 0 <= channel < len(src["volumes"]):
+            return
+        vols = list(src["volumes"])
+        vols[channel] = value
+        self._local("source", dict(src, volumes=vols))
+        self._queue("source", pw.run, "pactl", "set-source-volume", src["name"], *map(snapshot.raw, vols))
+
+    @Slot()
+    def toggleSourceMute(self) -> None:
+        src = self._model["source"]
+        if src:
+            self._local("source", dict(src, mute=not src["mute"]))
+            self._queue("source-mute", pw.run, "pactl", "set-source-mute", src["name"], "toggle")
 
     @Slot(int, float)
     def setGain(self, index: int, value: float) -> None:

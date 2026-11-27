@@ -26,6 +26,7 @@ Item {
     property real topStandard: NaN
     property string topTip: ""
 
+    property string faderTip: ""    // shown while hovering the fader
     property bool faderEnabled: true
     property bool faderVisible: true
     property string noFaderText: ""
@@ -245,6 +246,10 @@ Item {
             id: faderArea
             width: parent.width
             height: strip.faderHeight
+
+            // HoverHandler, not a MouseArea: it never takes the slider's input.
+            HoverHandler { id: faderHover }
+            Tip { visible: faderHover.hovered && strip.faderTip !== "" && strip.faderVisible; text: strip.faderTip }
 
             Text {
                 visible: !strip.faderVisible

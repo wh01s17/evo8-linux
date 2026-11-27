@@ -2,8 +2,12 @@
 
 Readers run in threads and keep only the latest peak per channel; the window
 polls `levels()` on a timer, so audio never waits for the UI and vice versa.
-The capture streams are passive (they never keep a device awake) and carry an
-`evo8.` node name so the app list hides them.
+The capture streams carry an `evo8.` node name so the app list hides them.
+Those on the Mezcla are passive (they never keep it running) and never fall
+back to another device while it is off. The interface's inputs are read
+directly and not passively, so their meters move whenever the window is open,
+like any mixer's; that reader may fall back, because WirePlumber drops a
+non-falling-back stream on an ALSA source while it reconfigures.
 """
 
 from __future__ import annotations
@@ -17,9 +21,10 @@ CHUNK_FRAMES = 480          # 10 ms
 
 
 class Reader:
-    def __init__(self, name: str, target: str, channels: int, capture_sink: bool):
+    def __init__(self, name: str, target: str, channels: int, capture_sink: bool,
+                 passive: bool = True, channel_map: str = ""):
         self.name, self.target, self.channels = name, target, channels
-        self.capture_sink = capture_sink
+        self.capture_sink, self.passive, self.channel_map = capture_sink, passive, channel_map
         self.peaks = [0.0] * channels
         self._proc: subprocess.Popen | None = None
         self._stop = threading.Event()
@@ -39,10 +44,15 @@ class Reader:
         return p
 
     def _cmd(self) -> list[str]:
-        props = (f"{{ node.name = evo8.meter.{self.name} node.passive = true "
-                 f"stream.capture.sink = {'true' if self.capture_sink else 'false'} }}")
-        return ["pw-record", "--raw", "--target", self.target, "--channels", str(self.channels),
-                "--rate", str(RATE), "--format", "f32", "--latency", "20ms", "-P", props, "-"]
+        flag = lambda v: "true" if v else "false"   # noqa: E731
+        props = (f"{{ node.name = evo8.meter.{self.name} node.passive = {flag(self.passive)} "
+                 f"node.dont-fallback = {flag(self.passive)} stream.dont-remix = true "
+                 f"stream.capture.sink = {flag(self.capture_sink)} }}")
+        cmd = ["pw-record", "--raw", "--target", self.target, "--channels", str(self.channels),
+               "--rate", str(RATE), "--format", "f32", "--latency", "20ms", "-P", props]
+        if self.channel_map:
+            cmd += ["--channel-map", self.channel_map]
+        return cmd + ["-"]
 
     def _run(self) -> None:
         size = CHUNK_FRAMES * self.channels * 4
@@ -71,8 +81,9 @@ class Reader:
 
 
 class Meters:
-    def __init__(self, specs: list[tuple[str, str, int, bool]]):
-        self.readers = {name: Reader(name, target, ch, cap) for name, target, ch, cap in specs}
+    def __init__(self, specs: list[tuple]):
+        """Each spec is Reader's arguments, name first."""
+        self.readers = {spec[0]: Reader(*spec) for spec in specs}
 
     def start(self) -> None:
         for r in self.readers.values():

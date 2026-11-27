@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 
-from .. import mix, pw
+from .. import mix, monitor, pw
 
 NORM = 65536
 # Our own plumbing and helpers never show up as "apps".
@@ -52,9 +52,11 @@ def build(sinks: list[dict], sources: list[dict], inputs: list[dict], default_si
     sink = next((s for s in sinks if s.get("name") == default_sink), None)
     shared = next((s for s in sinks if s.get("name") == mix.SHARED_SINK), None)
     mezcla = next((s for s in sources if s.get("name") == mix.MIX_SOURCE), None)
+    source = next((s for s in sources if s.get("name") == monitor.INPUT_SOURCE), None)
 
     out = {
         "sink": None,
+        "source": None,
         "mezcla": None,
         "escucha": None,
         "streams": [],
@@ -70,6 +72,9 @@ def build(sinks: list[dict], sources: list[dict], inputs: list[dict], default_si
             "volumes": vols,
             "mute": bool(sink.get("mute")),
         }
+    if source:
+        out["source"] = {"name": source["name"], "volumes": _volumes(source),
+                         "mute": bool(source.get("mute"))}
     if mezcla:
         out["mezcla"] = {"volume": _avg(_volumes(mezcla)), "mute": bool(mezcla.get("mute"))}
 

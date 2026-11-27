@@ -56,7 +56,7 @@ def main(argv: list[str] | None = None) -> int:
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("mixer", backend)
     args = argv if argv is not None else sys.argv
-    engine.setInitialProperties({"page": 1 if "--evo" in args else 0})
+    engine.setInitialProperties({"page": 2 if "--evo" in args else 1 if "--mezcla" in args else 0})
     engine.load(str(QML_DIR / "Main.qml"))
     if not engine.rootObjects():
         backend.shutdown()

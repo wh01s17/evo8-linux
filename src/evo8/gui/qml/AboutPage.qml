@@ -196,8 +196,8 @@ ScrollView {
                 Card {
                     Field { k: "Tipo"; v: page.a.install || "" }
                     Field {
-                        k: "Config PipeWire"
-                        v: page.a.pipewireConfig || "no encontrada: la Mezcla no existe"
+                        k: "Config Mezcla"
+                        v: page.a.pipewireConfig || "no encontrada: el micrófono virtual no se puede encender"
                         tone: page.a.pipewireConfig ? Theme.foreground : Theme.urgent
                     }
                     Field {

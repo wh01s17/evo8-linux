@@ -38,7 +38,7 @@ class MixerWindow(unittest.TestCase):
             window = engine.rootObjects()[0]
 
             def next_frame():
-                if window.property("page") < 2:
+                if window.property("page") < 3:
                     window.setProperty("page", window.property("page") + 1)
                 else:
                     app.quit()
