@@ -95,7 +95,8 @@ ScrollView {
                         topValue: page.preamp ? page.preamp.gains[index] : 0
                         topText: page.preamp ? F.signedDb(page.preamp.gains[index]) : "—"
                         topStandard: page.standardPreamp
-                        faderTip: "Volumen de esta entrada en el sistema: lo reciben todas las apps"
+                        topEditable: true
+                        faderTip: "Volumen de la entrada " + (index + 1) + " para todo el sistema: la Mezcla, el monitor y cualquier app que grabe de la EVO"
                         faderEnabled: hasChannel
                         maximum: 1.5
                         standard: page.standardVolume

@@ -7,6 +7,17 @@ function signedDb(db) {
     return (d > 0 ? "+" : "") + d.toFixed(1) + " dB"
 }
 
+// A value typed by hand ("24,5", "+12 dB", "-3") -> a number within
+// [min, max] on the control's step grid; null when it is not a number.
+function parseTyped(text, min, max, step) {
+    var s = String(text).replace(/db/i, "").replace(",", ".").trim()
+    if (!/^[+-]?(\d+\.?\d*|\.\d+)$/.test(s)) return null
+    var v = Math.min(Number(max), Math.max(Number(min), Number(s)))
+    var st = Number(step)
+    if (st > 0) v = Number(min) + Math.round((v - Number(min)) / st) * st
+    return Math.round(Math.min(Number(max), v) * 1e6) / 1e6
+}
+
 // Linear gain as decibels.
 function gainDb(gain) {
     var g = Number(gain)

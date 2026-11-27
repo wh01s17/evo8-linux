@@ -3,7 +3,8 @@ import "."
 
 // Segmented horizontal slider: a row of square cells lit up to the value, with
 // a square handle. Turned -90° it is the strips' fader. Drag, click or scroll;
-// right click asks for mute (`rightClicked`).
+// double click goes back to `standard` (when set); right click asks for mute
+// (`rightClicked`).
 Item {
     id: root
     property real value: 0
@@ -11,6 +12,7 @@ Item {
     property real maximum: 1
     property real step: 0.01
     property bool live: true
+    property real standard: NaN
     signal moved(real value)
     signal rightClicked()
 
@@ -67,6 +69,9 @@ Item {
         onPressed: function(m) {
             if (m.button === Qt.RightButton) { root.rightClicked(); return }
             root.moved(root.valueAt(m.x - 4))
+        }
+        onDoubleClicked: function(m) {
+            if (m.button === Qt.LeftButton && !isNaN(root.standard)) root.moved(root.standard)
         }
         onPositionChanged: function(m) {
             if (pressed && (m.buttons & Qt.LeftButton)) root.moved(root.valueAt(m.x - 4))

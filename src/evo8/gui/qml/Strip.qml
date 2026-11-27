@@ -25,6 +25,7 @@ Item {
     property string topText: ""
     property real topStandard: NaN
     property string topTip: ""
+    property bool topEditable: false     // click its value to type it (in the control's units)
 
     property string faderTip: ""    // shown while hovering the fader
     property bool faderEnabled: true
@@ -129,6 +130,7 @@ Item {
         property string text: ""
         property real standard: NaN
         property string tip: ""
+        property bool editable: false
         signal changed(real v)
         width: parent.width
         spacing: 3
@@ -161,6 +163,7 @@ Item {
         }
         PixelSlider {
             width: parent.width
+            standard: sc.standard
             minimum: sc.minimum
             maximum: sc.maximum
             step: sc.step
@@ -168,14 +171,88 @@ Item {
             enabled: sc.controlEnabled
             onMoved: function(v) { sc.changed(v) }
         }
-        Text {
+        // The value; when editable, a click turns it into a field:
+        // Enter applies (clamped to the range, on the step grid), Esc cancels.
+        Item {
             width: parent.width
-            horizontalAlignment: Text.AlignHCenter
-            text: sc.text
-            color: sc.controlEnabled ? Theme.foreground : Theme.dim
-            font.family: Theme.font
-            font.pixelSize: Theme.caption
-            font.bold: true
+            height: valueLabel.implicitHeight
+            Text {
+                id: valueLabel
+                anchors.fill: parent
+                visible: !field.visible
+                horizontalAlignment: Text.AlignHCenter
+                text: sc.text
+                color: sc.controlEnabled ? Theme.foreground : Theme.dim
+                font.family: Theme.font
+                font.pixelSize: Theme.caption
+                font.bold: true
+                font.underline: sc.editable && sc.controlEnabled && valueMouse.containsMouse
+            }
+            MouseArea {
+                id: valueMouse
+                anchors.fill: parent
+                enabled: sc.editable && sc.controlEnabled
+                hoverEnabled: true
+                cursorShape: Qt.IBeamCursor
+                onClicked: {
+                    field.text = String(Math.round(sc.val * 100) / 100)
+                    field.visible = true
+                    field.forceActiveFocus()
+                    field.selectAll()
+                }
+            }
+            Tip {
+                visible: valueMouse.containsMouse && !field.visible
+                text: "Clic para escribir el valor (" + sc.minimum + " a " + sc.maximum + ")"
+            }
+            Rectangle {
+                anchors.fill: field
+                anchors.margins: -2
+                visible: field.visible
+                color: Theme.surface
+                radius: Theme.radius
+                border.color: field.invalid ? Theme.urgent : Theme.accent
+            }
+            TextInput {
+                id: field
+                objectName: sc.editable ? "typedValue" : ""
+                property bool invalid: text !== "" && F.parseTyped(text, sc.minimum, sc.maximum, sc.step) === null
+                anchors.fill: parent
+                visible: false
+                horizontalAlignment: TextInput.AlignHCenter
+                color: Theme.foreground
+                selectionColor: Theme.alpha(Theme.accent, 0.5)
+                font.family: Theme.font
+                font.pixelSize: Theme.caption
+                font.bold: true
+                selectByMouse: true
+                function commit() {
+                    var v = F.parseTyped(text, sc.minimum, sc.maximum, sc.step)
+                    visible = false
+                    if (v !== null) sc.changed(v)
+                }
+                onAccepted: commit()
+                onActiveFocusChanged: if (!activeFocus && visible) commit()
+                // Esc here cancels the edit instead of closing the window.
+                Keys.onShortcutOverride: function(e) { e.accepted = (e.key === Qt.Key_Escape) }
+                Keys.onEscapePressed: visible = false
+            }
+            // While editing, a click anywhere else in the window applies, like
+            // Enter (clicking empty space takes no focus, so focus loss is not
+            // enough). The click still reaches whatever is under it.
+            MouseArea {
+                parent: field.visible && field.Window.window ? field.Window.window.contentItem : field
+                anchors.fill: parent
+                z: 10000
+                enabled: field.visible
+                visible: field.visible
+                onPressed: function(mouse) {
+                    var p = mapToItem(field, mouse.x, mouse.y)
+                    if (p.x < 0 || p.y < 0 || p.x > field.width || p.y > field.height)
+                        field.commit()
+                    mouse.accepted = false
+                }
+            }
         }
     }
 
@@ -226,6 +303,7 @@ Item {
                 text: strip.topText
                 standard: strip.topStandard
                 tip: strip.topTip
+                editable: strip.topEditable
                 onChanged: function(v) { strip.topMoved(v) }
             }
         }
@@ -309,6 +387,7 @@ Item {
                         anchors.centerIn: parent
                         width: parent.height
                         rotation: -90
+                        standard: strip.standard
                         minimum: strip.minimum
                         maximum: strip.maximum
                         step: strip.step

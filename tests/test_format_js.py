@@ -24,6 +24,16 @@ class FormatJs(unittest.TestCase):
         self.assertAlmostEqual(r, -6 + -6.0206, places=2)
         self.assertEqual(js(f"hwLevelPan({l}, {r})"), {"level": -6, "pan": -0.5, "muted": False})
 
+    def test_typed_values_are_clamped_to_the_preamp(self):
+        rng = "-8, 50, 0.5"
+        self.assertEqual(js(f"parseTyped('24,5', {rng})"), 24.5)
+        self.assertEqual(js(f"parseTyped(' +12 dB', {rng})"), 12)
+        self.assertEqual(js(f"parseTyped('12.3', {rng})"), 12.5)     # onto the 0.5 dB grid
+        self.assertEqual(js(f"parseTyped('80', {rng})"), 50)
+        self.assertEqual(js(f"parseTyped('-20', {rng})"), -8)
+        self.assertIsNone(js(f"parseTyped('fuerte', {rng})"))
+        self.assertIsNone(js(f"parseTyped('', {rng})"))
+
     def test_edges_and_off(self):
         self.assertEqual(js("hwCells(0, 1, -61)"), [-128, 0])     # hard right: left off
         self.assertEqual(js("hwCells(-61, 0, -61)"), [-128, -128])  # fader at the bottom

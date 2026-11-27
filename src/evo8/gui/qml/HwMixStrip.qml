@@ -109,6 +109,7 @@ Item {
                 minimum: -1
                 maximum: 1
                 step: 0.05
+                standard: 0
                 value: strip.pan
                 enabled: strip.known && !strip.muted
                 onMoved: function(v) { strip.panMoved(v) }
@@ -157,6 +158,7 @@ Item {
                     minimum: strip.floor
                     maximum: 0
                     step: 1
+                    standard: 0
                     value: strip.muted ? strip.floor : strip.level
                     enabled: strip.known
                     onMoved: function(v) { strip.levelMoved(v) }

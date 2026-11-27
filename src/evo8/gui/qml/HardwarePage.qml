@@ -578,6 +578,7 @@ ScrollView {
                                     minimum: page.offPosition
                                     maximum: 0
                                     step: 1
+                                    standard: 0
                                     value: cell.db === null ? page.offPosition : Math.max(page.offPosition, cell.db)
                                     onMoved: function(v) {
                                         mixer.hwSetCell(cell.row, cell.col, v <= page.offPosition ? -128 : v)
