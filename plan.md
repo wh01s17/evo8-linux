@@ -335,8 +335,8 @@ EVO8_MIXER_INSTANCE=dev PYTHONPATH=src python3 -m evo8.gui.app   # la ventana de
 - **Publicar una versión**: seguir `PUBLISH.md` (changelog, versión, tag).
   El tag `vX.Y.Z` dispara `.github/workflows/release.yml`: PyPI (trusted
   publishing, entorno `pypi`) y la release de GitHub con la sección de
-  `CHANGELOG.md` (`tools/release_notes.py`). Última publicada: **0.2.0**
-  (2026-11-22, https://pypi.org/project/evo8-linux/).
+  `CHANGELOG.md` (`tools/release_notes.py`). Última publicada: **0.3.0**
+  (2026-11-27, https://pypi.org/project/evo8-linux/).
 - Mientras se trabaja, anotar los cambios visibles en `## [Sin publicar]` de
   `CHANGELOG.md`.
 

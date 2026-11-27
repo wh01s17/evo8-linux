@@ -8,6 +8,8 @@ Cómo publicar una versión: [`PUBLISH.md`](https://github.com/wh01s17/evo8-linu
 
 ## [Sin publicar]
 
+## [0.3.0] - 2026-11-27
+
 ### Cambiado
 
 - La ventana separa las tres partes del proyecto en pestañas: **SONIDO DEL
@@ -124,7 +126,8 @@ Primera versión publicada.
 - CI en GitHub Actions: tests en Arch, paquete de Arch con `namcap` y el wheel
   instalado y probado en Ubuntu con Python 3.11 y 3.13.
 
-[Sin publicar]: https://github.com/wh01s17/evo8-linux/compare/v0.2.0...HEAD
+[Sin publicar]: https://github.com/wh01s17/evo8-linux/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/wh01s17/evo8-linux/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/wh01s17/evo8-linux/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/wh01s17/evo8-linux/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/wh01s17/evo8-linux/releases/tag/v0.1.0
