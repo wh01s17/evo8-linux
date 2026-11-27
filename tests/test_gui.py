@@ -2,7 +2,7 @@ import unittest
 
 from evo8 import profiles
 from evo8.gui import snapshot
-from evo8.gui.meters import CLIP_PEAK, latch_clips
+from evo8.gui.meters import CLIP_HOLD_S, CLIP_PEAK, clip_lights
 
 
 def vol(*values):
@@ -64,20 +64,25 @@ class Snapshot(unittest.TestCase):
 
 
 class ClipLights(unittest.TestCase):
-    def test_light_up_and_stay_lit(self):
-        clips = latch_clips({}, {"mezcla": [0.5]})
-        self.assertEqual(clips, {"mezcla": [False]})
-        clips = latch_clips(clips, {"mezcla": [1.3]})         # past 0 dBFS (float)
-        self.assertEqual(clips, {"mezcla": [True]})
-        self.assertIsNone(latch_clips(clips, {"mezcla": [0.1]}))   # stays lit: no change
+    def test_lit_while_clipping_then_out_by_itself(self):
+        until, lit = clip_lights({}, {"mezcla": [0.5]}, now=10)
+        self.assertEqual(lit, {"mezcla": [False]})
+        until, lit = clip_lights(until, {"mezcla": [1.3]}, now=11)        # past 0 dBFS (float)
+        self.assertEqual(lit, {"mezcla": [True]})
+        until, lit = clip_lights(until, {"mezcla": [0.1]}, now=11 + CLIP_HOLD_S - 0.1)
+        self.assertEqual(lit, {"mezcla": [True]})                          # a peak is still seen
+        until, lit = clip_lights(until, {"mezcla": [0.1]}, now=11 + CLIP_HOLD_S + 0.1)
+        self.assertEqual(lit, {"mezcla": [False]})                         # and then goes out
+
+    def test_clipping_again_keeps_it_on(self):
+        until, _ = clip_lights({}, {"mezcla": [1.0]}, now=0)
+        until, _ = clip_lights(until, {"mezcla": [1.0]}, now=1.5)
+        _, lit = clip_lights(until, {"mezcla": [0.0]}, now=3)
+        self.assertEqual(lit, {"mezcla": [True]})
 
     def test_per_channel_and_at_the_threshold(self):
-        clips = latch_clips({}, {"suma": [0.2, CLIP_PEAK, 0.99, 0]})
-        self.assertEqual(clips["suma"], [False, True, False, False])
-
-    def test_a_meter_that_read_nothing_keeps_its_lights(self):
-        clips = latch_clips({"entradas": [True]}, {"mezcla": [0.0]})
-        self.assertEqual(clips, {"entradas": [True], "mezcla": [False]})
+        _, lit = clip_lights({}, {"suma": [0.2, CLIP_PEAK, 0.99, 0]}, now=0)
+        self.assertEqual(lit["suma"], [False, True, False, False])
 
 
 def prof(name, desc, sinks, sources):

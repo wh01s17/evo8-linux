@@ -109,7 +109,6 @@ ScrollView {
                         valueText: hasChannel ? F.percent(value) : "—"
                         meterLeft: hasChannel ? F.meterLevel(page.peak("entradas", index)) : -1
                         clipped: page.clip("entradas", index)
-                        onClipCleared: mixer.clearClip("entradas", index)
                         muted: !!page.source && page.source.mute
                         // The system mutes the whole source, like the output: one button.
                         showMute: index === 0 && !!page.source

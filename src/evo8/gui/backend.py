@@ -25,7 +25,7 @@ from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 
 from .. import about, alsa, calibrate, hw, mix, monitor, profiles, pw, state
 from . import snapshot
-from .meters import Meters, latch_clips
+from .meters import Meters, clip_lights
 
 HOLD_S = 1.5
 FAST_MS = 1000
@@ -106,6 +106,7 @@ class Backend(QObject):
         }
         self._meters_view: dict = {}
         self._clips: dict[str, list[bool]] = {}
+        self._clip_until: dict[str, list[float]] = {}
         self._about: dict = {}
         self.refreshAbout()
         self._hold: dict[str, float] = {}
@@ -148,7 +149,7 @@ class Backend(QObject):
         return self._clips
 
     model = Property("QVariant", _get_model, notify=modelChanged)
-    # Per meter, per channel: reached 0 dBFS since last cleared.
+    # Per meter, per channel: clipping now (or within the last CLIP_HOLD_S).
     clips = Property("QVariant", _get_clips, notify=clipsChanged)
     meters = Property("QVariant", _get_meters, notify=metersChanged)
     hardware = Property("QVariant", _get_hw, notify=hwChanged)
@@ -537,19 +538,11 @@ class Backend(QObject):
                      message=ok_text)
 
     # ---- meters ----
-    @Slot(str, int)
-    def clearClip(self, name: str, channel: int) -> None:
-        lit = list(self._clips.get(name) or [])
-        if 0 <= channel < len(lit) and lit[channel]:
-            lit[channel] = False
-            self._clips = dict(self._clips, **{name: lit})
-            self.clipsChanged.emit()
-
     def _update_meters(self) -> None:
         levels = self._meters.levels()
-        clips = latch_clips(self._clips, levels)
-        if clips is not None:
-            self._clips = clips
+        self._clip_until, lit = clip_lights(self._clip_until, levels, time.monotonic())
+        if lit != self._clips:
+            self._clips = lit
             self.clipsChanged.emit()
         view = dict(self._meters_view)
         for name, peaks in levels.items():

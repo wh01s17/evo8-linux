@@ -22,23 +22,25 @@ CHUNK_FRAMES = 480          # 10 ms
 # (-0.01 dBFS). Float paths (a source volume above 100 %, the Mezcla's
 # gains) can go past 1.0, which clips wherever the audio becomes integers.
 CLIP_PEAK = 0.999
+# A clip light stays on this long after the last clipping sample, so a single
+# peak is still seen; then it goes out by itself.
+CLIP_HOLD_S = 2.0
 
 
-def latch_clips(clips: dict[str, list[bool]], levels: dict[str, list[float]]) -> dict[str, list[bool]] | None:
-    """Clip lights after one read of peaks: a channel that reached CLIP_PEAK
-    lights up and stays lit (until cleared). The new state, or None when
-    nothing changed."""
-    new = {}
-    changed = False
+def clip_lights(until: dict[str, list[float]], levels: dict[str, list[float]], now: float,
+                hold: float = CLIP_HOLD_S) -> tuple[dict[str, list[float]], dict[str, list[bool]]]:
+    """One read of peaks -> (until, lit). `until` holds, per meter and
+    channel, the time its light stays on to; a channel reaching CLIP_PEAK
+    pushes it to now + hold."""
+    new = {name: list(times) for name, times in until.items()}
     for name, peaks in levels.items():
-        before = clips.get(name) or []
-        lit = [p >= CLIP_PEAK or (i < len(before) and before[i]) for i, p in enumerate(peaks)]
-        if lit != before:
-            changed = True
-        new[name] = lit
-    for name, lit in clips.items():
-        new.setdefault(name, lit)
-    return new if changed else None
+        times = new.get(name) or []
+        times += [0.0] * (len(peaks) - len(times))
+        for i, p in enumerate(peaks):
+            if p >= CLIP_PEAK:
+                times[i] = now + hold
+        new[name] = times
+    return new, {name: [t > now for t in times] for name, times in new.items()}
 
 
 class Reader:

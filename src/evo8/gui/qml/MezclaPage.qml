@@ -173,7 +173,6 @@ ScrollView {
                             valueText: page.ready ? F.gainDb(page.gains[g]) : "—"
                             meterLeft: F.meterLevel(page.peak("suma", g))
                             clipped: page.clip("suma", g)
-                            onClipCleared: mixer.clearClip("suma", g)
                             muted: page.ready && page.gains[g] === 0
                             onMoved: function(v) { mixer.setGain(g, v) }
                             onMuteToggled: mixer.toggleGainMute(g)
@@ -302,7 +301,6 @@ ScrollView {
                         meterLeft: F.meterLevel(page.peak("suma", 2))
                         meterRight: F.meterLevel(page.peak("suma", 3))
                         clipped: page.clip("suma", 2) || page.clip("suma", 3)
-                        onClipCleared: { mixer.clearClip("suma", 2); mixer.clearClip("suma", 3) }
                         muted: page.ready && page.gains[2] === 0
                         onMoved: function(v) { mixer.setSharedGain(v) }
                         onMuteToggled: mixer.toggleGainMute(2)
@@ -348,7 +346,6 @@ ScrollView {
                         valueText: F.percent(value)
                         meterLeft: F.meterLevel(page.peak("mezcla", 0))
                         clipped: page.clip("mezcla", 0)
-                        onClipCleared: mixer.clearClip("mezcla", 0)
                         muted: !!mz && mz.mute
                         onMoved: function(v) { mixer.setMezclaVolume(v) }
                         onMuteToggled: mixer.toggleMezclaMute()

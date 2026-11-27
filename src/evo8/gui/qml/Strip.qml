@@ -39,8 +39,7 @@ Item {
     property string valueText: ""
     property real meterLeft: -1
     property real meterRight: -1
-    property bool clipped: false           // a meter reached 0 dBFS (latched)
-    signal clipCleared()
+    property bool clipped: false           // a meter is clipping (or just did)
     property bool muted: false
     property bool showMute: true
     property bool shareVisible: false
@@ -367,8 +366,8 @@ Item {
                 height: parent.height
                 spacing: 4
 
-                // Meters with a clip light on top: it lights when a sample
-                // reaches 0 dBFS and stays lit until clicked.
+                // Meters with a clip light on top: lit while a sample reaches
+                // 0 dBFS and for a moment after, then out by itself.
                 Column {
                     visible: strip.meterLeft >= 0
                     height: parent.height
@@ -380,18 +379,10 @@ Item {
                         height: 8
                         radius: 1
                         color: strip.clipped ? Theme.urgent : Theme.alpha(Theme.urgent, 0.15)
-                        MouseArea {
-                            id: clipMouse
-                            anchors.fill: parent
-                            anchors.margins: -4
-                            hoverEnabled: true
-                            cursorShape: strip.clipped ? Qt.PointingHandCursor : Qt.ArrowCursor
-                            onClicked: if (strip.clipped) strip.clipCleared()
-                        }
+                        HoverHandler { id: clipHover }
                         Tip {
-                            visible: clipMouse.containsMouse
-                            text: strip.clipped ? "Saturó: llegó a 0 dBFS. Clic para apagar"
-                                                : "Se enciende si la señal llega a 0 dBFS (saturación)"
+                            visible: clipHover.hovered
+                            text: "Se enciende cuando la señal llega a 0 dBFS (saturación)"
                         }
                     }
                     Row {

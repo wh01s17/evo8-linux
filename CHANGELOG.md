@@ -11,7 +11,7 @@ Cómo publicar una versión: [`PUBLISH.md`](https://github.com/wh01s17/evo8-linu
 ### Agregado
 
 - Indicador de saturación sobre cada medidor: se enciende en rojo cuando la
-  señal llega a 0 dBFS y queda encendido hasta que haces clic en él. En
+  señal llega a 0 dBFS y se apaga solo 2 segundos después del último pico. En
   SONIDO DEL PC mide cada entrada con su volumen de sistema; en MICRÓFONO
   VIRTUAL, lo que entra a la Mezcla y lo que sale hacia las apps (el master,
   con todas las ganancias).
